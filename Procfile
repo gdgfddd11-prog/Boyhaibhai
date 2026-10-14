@@ -1,1 +1,1 @@
-web: python Ritesh.py
+web: gunicorn Ritesh:app
