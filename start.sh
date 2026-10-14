@@ -1,1 +1,1 @@
-python3 Ritesh.py
+python Ritesh.py
