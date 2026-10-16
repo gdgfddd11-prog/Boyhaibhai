@@ -466,7 +466,7 @@ def lookup():
             data = r.text
             
           
-        if isinstance(data, dict): data.pop('rate_limit', None)
+        if isinstance(data, dict): data.pop('credit_limit', None)
         if isinstance(data, dict): data.pop('credit', None)
         pretty = json.dumps(data, indent=2, ensure_ascii=False) if isinstance(data, (dict, list)) else str(data)
 
