@@ -482,16 +482,16 @@ def lookup():
             't.me/',
             'telegram',
             'Telegram',
-            'bot_username','@Osintinfooobot'
-            'channel_link','https://t.me/osintinfoooo'
+            'bot_username', '@Osintinfooobot'
+            'channel_link', 'https://t.me/osintinfoooo'
             'Join @',
             'join @',
-            'Owner:','@shiva_158'
-            'owner:','@shiva_158'
-            'Channel:','https://t.me/osintinfoooo'
-            'channel:','https://t.me/osintinfoooo'
-            'Bot:','@Osintinfooobot'
-            'bot:','@Osintinfooobot'
+            'Owner:', '@shiva_158'
+            'owner:', '@shiva_158'
+            'Channel:', 'https://t.me/osintinfoooo'
+            'channel:', 'https://t.me/osintinfoooo'
+            'Bot:', '@Osintinfooobot'
+            'bot:', '@Osintinfooobot'
         ]
         for pattern in unwanted_patterns:
             pretty = pretty.replace(pattern, '')
