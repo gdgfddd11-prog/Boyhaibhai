@@ -30,11 +30,11 @@ STATIC_DIR = Path("static")
 STATIC_DIR.mkdir(exist_ok=True)
 
 # UPI Payment Config
-UPI_ID = "riteshgiri7930@okhdfcbank"              # <-- Apna UPI ID yahan daalo
-UPI_NAME = "Ritesh Giri"        # <-- Apna naam
-QR_IMAGE = "qr.png"                # static/qr.png me rakho
-ADMIN_USERNAME = "@SADAURA4U"           # <-- Admin username
-ADMIN_PASSWORD = "ritesh111"        # <-- Admin password (change karo!)
+UPI_ID = "riteshgiri7930@okhdfcbank"
+UPI_NAME = "Ritesh Giri"
+QR_IMAGE = "qr.png"
+ADMIN_USERNAME = "@SADAURA4U"
+ADMIN_PASSWORD = "ritesh111"
 
 # Credit Packages (₹ -> credits)
 PACKAGES = [
@@ -53,8 +53,6 @@ DEFAULT_COST = 1
 # ============================================================
 ENDPOINTS = {
     "num":  {"path": "num",  "param": "number", "label": "📞 Number Lookup",  "placeholder": "9876543210", "category": "📱 Phone", "cost": 2},
-    # Add more endpoints here as needed, following the same pattern:
-    # "endpoint_name": {"path": "endpoint_path", "param": "param_name", "label": "Display Label", "placeholder": "example", "category": "Category", "cost": 1},
 }
 
 GROUPED = {}
@@ -99,7 +97,6 @@ def init_db():
         FOREIGN KEY(user_id) REFERENCES users(id)
     )""")
 
-    # Create admin if not exists
     c.execute("SELECT * FROM users WHERE username = ?", (ADMIN_USERNAME,))
     if not c.fetchone():
         c.execute(
@@ -259,7 +256,7 @@ def signup():
         conn = get_db()
         try:
             conn.execute("INSERT INTO users (username, password, credits) VALUES (?, ?, ?)",
-                         (u, generate_password_hash(p), 5))  # 5 free credits
+                         (u, generate_password_hash(p), 5))
             conn.commit()
             return render_page("Signup", '<div class="success">✅ Account bana! 5 free credits mile. <a href="/login">Login karo</a></div>')
         except sqlite3.IntegrityError:
@@ -399,7 +396,6 @@ def index():
                 out.innerHTML = `<div class="error">❌ ${data.message}</div>`;
                 return;
             }
-            // Update credit badge
             const badge = document.querySelector('.credit-badge');
             if (badge && data.remaining_credits !== undefined) badge.textContent = `💰 ${data.remaining_credits} Credits`;
             out.innerHTML = `
@@ -448,7 +444,6 @@ def lookup():
         conn.close()
         return jsonify({"success": False, "message": f"Insufficient credits. Need {cost}, you have {user['credits']}. Please buy more."})
 
-    # Build URL - New API format: https://api.osintxc.com/num?number=9876543210&key=DADDY
     url = f"{API_BASE}/{cfg['path']}?{cfg['param']}={q}&key={API_KEY}"
     if "extra" in cfg:
         for k, v in cfg["extra"].items():
@@ -464,14 +459,43 @@ def lookup():
                 data = r.text
         else:
             data = r.text
-            
-          
-        if isinstance(data, dict): data.pop('credit_limit', None)
-        if isinstance(data, dict): data.pop('credit', None)
+
+        # Remove unwanted fields from response
+        if isinstance(data, dict):
+            data.pop('credit_limit', None)
+            data.pop('credit', None)
+            data.pop('bot_username', None)
+            data.pop('channel_link', None)
+            data.pop('channel', None)
+            data.pop('username', None)
+            data.pop('bot', None)
+            data.pop('join', None)
+            data.pop('owner', None)
+
         pretty = json.dumps(data, indent=2, ensure_ascii=False) if isinstance(data, (dict, list)) else str(data)
 
-        # Deduct credit + log history (only if request reached API)
-        pretty = pretty.replace('by @SADAURA4U', '')
+        # Remove common unwanted text patterns
+        unwanted_patterns = [
+            'by @SADAURA4U',
+            '@SADAURA4U',
+            'SADAURA4U',
+            't.me/',
+            'telegram',
+            'Telegram',
+            'bot_username',
+            'channel_link',
+            'Join @',
+            'join @',
+            'Owner:',
+            'owner:',
+            'Channel:',
+            'channel:',
+            'Bot:',
+            'bot:',
+        ]
+        for pattern in unwanted_patterns:
+            pretty = pretty.replace(pattern, '')
+
         new_credits = user['credits'] - cost
         conn.execute("UPDATE users SET credits=? WHERE id=?", (new_credits, user_id))
         conn.execute("INSERT INTO history (user_id, tool, query, cost) VALUES (?, ?, ?, ?)",
@@ -480,8 +504,8 @@ def lookup():
         conn.close()
 
         return jsonify({
-            "success": True,            
-           "status": r.status_code,
+            "success": True,
+            "status": r.status_code,
             "pretty": pretty,
             "cost": cost,
             "remaining_credits": new_credits
@@ -823,3 +847,4 @@ if __name__ == '__main__':
     print(f"🔑 API Key    : {API_KEY}")
     print("="*60 + "\n")
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))
+         
