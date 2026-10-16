@@ -1,6 +1,6 @@
 """
-🕵️ Ritesh OSINT Toolkit - All-in-One
-Features: User Auth + Credits + Admin Panel + UPI/QR Payment + 28 APIs
+🕵️ Ritesh OSINT Toolkit - All-in-One (Updated with New API)
+Features: User Auth + Credits + Admin Panel + UPI/QR Payment
 Run: python Ritesh.py
 """
 
@@ -22,8 +22,8 @@ app.secret_key = os.environ.get("SECRET_KEY", secrets.token_hex(32))
 # ============================================================
 # CONFIG
 # ============================================================
-API_BASE = "https://ftosint.world/api"
-API_KEY = "cobra-limited-land"
+API_BASE = "https://api.osintxc.com"
+API_KEY = "DADDY"
 TIMEOUT = 25
 DB_PATH = "osint.db"
 STATIC_DIR = Path("static")
@@ -49,43 +49,12 @@ PACKAGES = [
 DEFAULT_COST = 1
 
 # ============================================================
-# ENDPOINTS (28 APIs)
+# ENDPOINTS - New API endpoints
 # ============================================================
 ENDPOINTS = {
-    "number":     {"path": "number",     "param": "num",     "label": "📞 Number Lookup",           "placeholder": "9876543210",       "category": "📱 Phone",              "cost": 2},
-    "numleak":    {"path": "numleak",    "param": "num",     "label": "🔎 Number Leak (HiTeck+ICMR)","placeholder": "9876543210",       "category": "📱 Phone",              "cost": 3},
-
-    "address":    {"path": "address",    "param": "address", "label": "📍 Address Lookup",           "placeholder": "Okhla Delhi",      "category": "📍 Address",            "cost": 2},
-    "pincode":    {"path": "pincode",    "param": "pin",     "label": "📍 Pincode",                 "placeholder": "110001",           "category": "📍 Address",            "cost": 1},
-
-    "vehicle":    {"path": "vehicle",    "param": "vehicle", "label": "🚗 Vehicle to Owner",         "placeholder": "KA01AB1234",       "category": "🚗 Vehicle",            "cost": 3},
-    "veh2num":    {"path": "veh2num",    "param": "vehicle", "label": "🚗 Vehicle to Mobile",        "placeholder": "KL41V3504",        "category": "🚗 Vehicle",            "cost": 3},
-    "fastag":     {"path": "fastag",     "param": "vehicle", "label": "🏷 FASTag Lookup",             "placeholder": "KA01AB1234",       "category": "🚗 Vehicle",            "cost": 2},
-    "challan":    {"path": "challan",    "param": "vehicle", "label": "🧾 Challan Lookup",            "placeholder": "KA01AB1234",       "category": "🚗 Vehicle",            "cost": 2},
-    "rcpdf":      {"path": "rcpdf",      "param": "vehicle", "label": "📄 RC PDF",                   "placeholder": "KA01AB1234",       "category": "🚗 Vehicle",            "cost": 3},
-    "rcchip":     {"path": "rcchip",     "param": "vehicle", "label": "📄 RC PDF Chip",              "placeholder": "KA01AB1234",       "category": "🚗 Vehicle",            "cost": 3},
-    "vinfo":      {"path": "vinfo",      "param": "reg",     "label": "📘 VInfo RC Details",         "placeholder": "MH16BZ7090",       "category": "🚗 Vehicle",            "cost": 2},
-    "puc":        {"path": "puc",        "param": "reg",     "label": "🌿 PUC Certificate PDF",      "placeholder": "MH16BZ7090",       "category": "🚗 Vehicle",            "cost": 2},
-    "hw":         {"path": "hw",         "param": "chasi",   "label": "⚙️ Chassis / Engine Lookup",  "placeholder": "MA3NYFB1SKD530868", "category": "🚗 Vehicle",            "cost": 2},
-    "hpt":        {"path": "hpt",        "param": "reg",     "label": "📝 HP / Financier Record",    "placeholder": "KA01AB1234",       "category": "🚗 Vehicle",            "cost": 2},
-    "vehindex":   {"path": "vehindex",   "param": "reg",     "label": "📋 Vehicle Index Lookup",     "placeholder": "MH16BZ7090",       "category": "🚗 Vehicle",            "cost": 2},
-
-    "ifsc":       {"path": "ifsc",       "param": "ifsc",    "label": "🏦 IFSC Lookup",              "placeholder": "SBIN0001234",      "category": "🏦 Banking",            "cost": 1},
-
-    "pan":        {"path": "pan",        "param": "pan",     "label": "🪪 PAN to GST",               "placeholder": "ABCDE1234F",       "category": "🪪 Tax / PAN / GST",    "cost": 2},
-    "paninfo":    {"path": "paninfo",    "param": "pan",     "label": "🪪 PAN to Info",              "placeholder": "BNZPM2501F",       "category": "🪪 Tax / PAN / GST",    "cost": 3},
-    "pantogstin": {"path": "pantogstin", "param": "pan",     "label": "🪪 PAN to GSTIN",             "placeholder": "ANXPV7978A",       "category": "🪪 Tax / PAN / GST",    "cost": 2},
-    "gstin":      {"path": "gstin",      "param": "gstin",   "label": "🪪 GSTIN to Info",            "placeholder": "07AABCF8078M1Z3",  "category": "🪪 Tax / PAN / GST",    "cost": 2},
-    "gstin2pan":  {"path": "gstin2pan",  "param": "gstin",   "label": "🔄 GSTIN to PAN",             "placeholder": "07AABCF8078M1Z3",  "category": "🪪 Tax / PAN / GST",    "cost": 2},
-    "gstreturns": {"path": "gstreturns", "param": "gstin",   "label": "🧾 GST Returns",              "placeholder": "07AABCF8078M1Z3",  "category": "🪪 Tax / PAN / GST",    "cost": 3,
-                   "extra": {"financial_year": "2023-24"}},
-    "name2gstin": {"path": "name2gstin", "param": "name",    "label": "🔎 Name to GSTIN",            "placeholder": "FLIPKART",         "category": "🪪 Tax / PAN / GST",    "cost": 2},
-    "nametoinfo": {"path": "nametoinfo", "param": "name",    "label": "👤 Name to Info",             "placeholder": "RAHUL",            "category": "🪪 Tax / PAN / GST",    "cost": 2},
-    "namesearch": {"path": "namesearch", "param": "q",       "label": "👤 Name Search",              "placeholder": "Ramesh",           "category": "🪪 Tax / PAN / GST",    "cost": 2,
-                   "extra": {"from": "Delhi"}},
-
-    "aadhar":     {"path": "aadhar",     "param": "num",     "label": "🆔 Aadhaar Lookup",           "placeholder": "393933081942",     "category": "🆔 Identity",           "cost": 5},
-    "voter":      {"path": "voter",      "param": "id",      "label": "🗳 Voter ID Lookup",          "placeholder": "ZNO1150077",       "category": "🆔 Identity",           "cost": 3},
+    "num":  {"path": "num",  "param": "number", "label": "📞 Number Lookup",  "placeholder": "9876543210", "category": "📱 Phone", "cost": 2},
+    # Add more endpoints here as needed, following the same pattern:
+    # "endpoint_name": {"path": "endpoint_path", "param": "param_name", "label": "Display Label", "placeholder": "example", "category": "Category", "cost": 1},
 }
 
 GROUPED = {}
@@ -479,8 +448,8 @@ def lookup():
         conn.close()
         return jsonify({"success": False, "message": f"Insufficient credits. Need {cost}, you have {user['credits']}. Please buy more."})
 
-    # Build URL
-    url = f"{API_BASE}/{cfg['path']}?key={API_KEY}&{cfg['param']}={q}"
+    # Build URL - New API format: https://api.osintxc.com/num?number=9876543210&key=DADDY
+    url = f"{API_BASE}/{cfg['path']}?{cfg['param']}={q}&key={API_KEY}"
     if "extra" in cfg:
         for k, v in cfg["extra"].items():
             url += f"&{k}={v}"
@@ -541,7 +510,7 @@ def buy():
 
     for p in PACKAGES:
         content += f"""
-        <divclass="card" style="text-align:center;">
+        <div class="card" style="text-align:center;">
             <div style="font-size:1.3rem;font-weight:bold;color:#4facfe;margin-bottom:8px;">{p['label']}</div>
             <div style="font-size:0.85rem;color:#aaa;margin-bottom:15px;">₹{p['amount']} = {p['credits']} credits</div>
             <button class="btn" style="width:100%;" onclick="buyPack('{p['id']}')">Buy Now</button>
@@ -777,10 +746,11 @@ def admin():
         </div>
     </div>
 
-    <divclass="card">
+    <div class="card">
         <h2 style="font-size:1.15rem;margin-bottom:12px;color:#00f2fe;">⚙️ Settings</h2>
         <p style="color:#aaa;font-size:.9rem;line-height:1.7;">
             • API Base: <code>{API_BASE}</code><br>
+            • API Key: <code>{API_KEY}</code><br>
             • UPI ID: <b>{UPI_ID}</b><br>
             • Total APIs: <b>{len(ENDPOINTS)}</b><br>
             • QR Image: <code>static/{QR_IMAGE}</code>
@@ -846,5 +816,7 @@ if __name__ == '__main__':
     print(f"👑 Admin      : {ADMIN_USERNAME} / {ADMIN_PASSWORD}")
     print(f"💰 UPI        : {UPI_ID}")
     print(f"📷 QR Image   : static/{QR_IMAGE}")
+    print(f"🔑 API Base   : {API_BASE}")
+    print(f"🔑 API Key    : {API_KEY}")
     print("="*60 + "\n")
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))
