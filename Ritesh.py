@@ -29,6 +29,10 @@ DB_PATH = "osint.db"
 STATIC_DIR = Path("static")
 STATIC_DIR.mkdir(exist_ok=True)
 
+# Family API Config (New)
+FAMILY_API_BASE = "https://sahilxher.madewith.me/api/family"
+FAMILY_API_KEY = "Navratri"
+
 # UPI Payment Config
 UPI_ID = "riteshgiri7930@okhdfcbank"
 UPI_NAME = "Ritesh Giri"
@@ -53,6 +57,18 @@ DEFAULT_COST = 1
 # ============================================================
 ENDPOINTS = {
     "num":  {"path": "num",  "param": "number", "label": "📞 Number Lookup",  "placeholder": "9876543210", "category": "📱 Phone", "cost": 2},
+}
+
+# Add Family API tool
+ENDPOINTS["family"] = {
+    "path": "family",
+    "param": "term",
+    "label": "👨‍👩‍👧‍👦 Family Lookup",
+    "placeholder": "Aadhaar / Mobile / Name",
+    "category": "📱 Phone",
+    "cost": 3,
+    "api_base": FAMILY_API_BASE,
+    "api_key": FAMILY_API_KEY,
 }
 
 GROUPED = {}
@@ -204,6 +220,13 @@ table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
 table th, table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.08); }
 table th { color: #4facfe; font-weight: 600; background: rgba(0,0,0,0.2); }
 table tr:hover { background: rgba(255,255,255,0.03); }
+.tab-btn {
+    padding: 8px 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.05); color: #ccc; cursor: pointer; font-size: 0.85rem;
+    transition: all 0.2s;
+}
+.tab-btn:hover { background: rgba(79,172,254,0.15); color: #fff; }
+.tab-btn.active { background: linear-gradient(90deg, #00f2fe, #4facfe); color: #000; font-weight: bold; border-color: transparent; }
 </style>
 """
 
@@ -371,7 +394,10 @@ def index():
     }
     function selectTool(key, label, placeholder, el) {
         selectedTool = key;
-        document.querySelectorAll('.tool-card').forEach(c => c.style.borderColor = 'rgba(255,255,255,0.08)');
+        document.querySelectorAll('.tool-card').forEach(c => {
+            c.style.borderColor = 'rgba(255,255,255,0.08)';
+            c.style.background = 'rgba(255,255,255,0.05)';
+        });
         el.style.borderColor = '#00f2fe';
         el.style.background = 'rgba(79,172,254,0.15)';
         const input = document.getElementById('queryInput');
@@ -444,7 +470,17 @@ def lookup():
         conn.close()
         return jsonify({"success": False, "message": f"Insufficient credits. Need {cost}, you have {user['credits']}. Please buy more."})
 
-    url = f"{API_BASE}/{cfg['path']}?{cfg['param']}={q}&key={API_KEY}"
+    # Build URL based on tool configuration
+    if "api_base" in cfg:
+        # Family API or other custom API
+        base = cfg["api_base"]
+        key = cfg.get("api_key", "")
+        param = cfg["param"]
+        url = f"{base}?key={key}&{param}={q}"
+    else:
+        # Default OSINTXC API
+        url = f"{API_BASE}/{cfg['path']}?{cfg['param']}={q}&key={API_KEY}"
+
     if "extra" in cfg:
         for k, v in cfg["extra"].items():
             url += f"&{k}={v}"
@@ -509,7 +545,8 @@ def lookup():
             "status": r.status_code,
             "pretty": pretty,
             "cost": cost,
-            "remaining_credits": new_credits
+            "remaining_credits": new_credits,
+            "url": url
         })
 
     except requests.exceptions.Timeout:
@@ -691,7 +728,7 @@ def admin():
     users = conn.execute("SELECT id, username, credits, is_admin, created_at FROM users ORDER BY id DESC").fetchall()
     payments = conn.execute("""SELECT p.*, u.username FROM payments p 
                                JOIN users u ON u.id = p.user_id 
-                               ORDER BY p.id DESC LIMIT 50""").fetchall()
+                               ORDER BYp.id DESC LIMIT 50""").fetchall()
     stats = {
         "total_users": conn.execute("SELECT COUNT(*) c FROM users").fetchone()['c'],
         "total_searches": conn.execute("SELECT COUNT(*) c FROM history").fetchone()['c'],
@@ -779,6 +816,8 @@ def admin():
         <p style="color:#aaa;font-size:.9rem;line-height:1.7;">
             • API Base: <code>{API_BASE}</code><br>
             • API Key: <code>{API_KEY}</code><br>
+            • Family API: <code>{FAMILY_API_BASE}</code><br>
+            • Family Key: <code>{FAMILY_API_KEY}</code><br>
             • UPI ID: <b>{UPI_ID}</b><br>
             • Total APIs: <b>{len(ENDPOINTS)}</b><br>
             • QR Image: <code>static/{QR_IMAGE}</code>
@@ -846,6 +885,8 @@ if __name__ == '__main__':
     print(f"📷 QR Image   : static/{QR_IMAGE}")
     print(f"🔑 API Base   : {API_BASE}")
     print(f"🔑 API Key    : {API_KEY}")
+    print(f"🔑 Family API : {FAMILY_API_BASE}")
+    print(f"🔑 Family Key : {FAMILY_API_KEY}")
     print("="*60 + "\n")
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))
          
