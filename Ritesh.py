@@ -467,7 +467,7 @@ def lookup():
             
           
         if isinstance(data, dict): data.pop('rate_limit', None)
-        data.pop('rate_limit', None)
+        if isinstance(data, dict): data.pop('credit', None)
         pretty = json.dumps(data, indent=2, ensure_ascii=False) if isinstance(data, (dict, list)) else str(data)
 
         # Deduct credit + log history (only if request reached API)
