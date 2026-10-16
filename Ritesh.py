@@ -499,6 +499,7 @@ def lookup():
         pretty = json.dumps(data, indent=2, ensure_ascii=False) if isinstance(data, (dict, list)) else str(data)
 
         # Deduct credit + log history (only if request reached API)
+        pretty = pretty.replace('by @ftgamer2', '')
         new_credits = user['credits'] - cost
         conn.execute("UPDATE users SET credits=? WHERE id=?", (new_credits, user_id))
         conn.execute("INSERT INTO history (user_id, tool, query, cost) VALUES (?, ?, ?, ?)",
