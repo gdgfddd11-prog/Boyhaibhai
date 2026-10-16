@@ -471,6 +471,7 @@ def lookup():
             data.pop('bot', None)
             data.pop('join', None)
             data.pop('owner', None)
+            data.pop('rate_limit', None)
 
         pretty = json.dumps(data, indent=2, ensure_ascii=False) if isinstance(data, (dict, list)) else str(data)
 
