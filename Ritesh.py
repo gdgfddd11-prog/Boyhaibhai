@@ -1,6 +1,5 @@
 """
-🕵️ Ritesh OSINT Toolkit - All-in-One
-Features: User Auth + Credits + Admin Panel + UPI/QR Payment
+🕵️ Ritesh OSINT Toolkit - All-in-One (FIXED + Broadcast + Credit Display)
 Run: python Ritesh.py
 """
 
@@ -36,7 +35,7 @@ QR_IMAGE = "qr.png"
 ADMIN_USERNAME = "@SADAURA4U"
 ADMIN_PASSWORD = "ritesh111"
 
-# Credit Packages (₹ -> credits)
+# Credit Packages
 PACKAGES = [
     {"id": "p1",  "amount": 50,   "credits": 50,   "label": "₹50 - 50 Credits"},
     {"id": "p2",  "amount": 100,  "credits": 120,  "label": "₹100 - 120 Credits (Bonus)"},
@@ -45,16 +44,15 @@ PACKAGES = [
     {"id": "p5",  "amount": 1000, "credits": 1500, "label": "₹1000 - 1500 Credits (Mega)"},
 ]
 
-# Default credit cost per API call
 DEFAULT_COST = 1
 
 # ============================================================
-# ENDPOINTS - Updated with Email & Aadhaar
+# ENDPOINTS
 # ============================================================
 ENDPOINTS = {
-    "num":    {"path": "num",    "param": "number", "label": "📞 Number Lookup",  "placeholder": "9876543210",        "category": "📱 Phone",  "cost": 2},
-    "email":  {"path": "email",  "param": "value",  "label": "📧 Email Lookup",   "placeholder": "test@example.com",  "category": "📧 Email",  "cost": 2},
-    "aadhar": {"path": "aadhaar","param": "value",  "label": "🆔 Aadhaar Lookup", "placeholder": "123456789012",      "category": "🆔 Identity","cost": 3},
+    "num":    {"path": "num",    "param": "number", "label": "📞 Number Lookup",  "placeholder": "9876543210",       "category": "📱 Phone",   "cost": 2},
+    "email":  {"path": "email",  "param": "value",  "label": "📧 Email Lookup",   "placeholder": "test@example.com", "category": "📧 Email",   "cost": 2},
+    "aadhar": {"path": "aadhaar","param": "value",  "label": "🆔 Aadhaar Lookup", "placeholder": "123456789012",     "category": "🆔 Identity","cost": 3},
 }
 
 GROUPED = {}
@@ -97,6 +95,21 @@ def init_db():
         status TEXT DEFAULT 'pending',
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(user_id) REFERENCES users(id)
+    )""")
+
+    # Broadcast messages table
+    c.execute("""CREATE TABLE IF NOT EXISTS broadcasts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        message TEXT NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )""")
+
+    # Broadcast read tracking (per user)
+    c.execute("""CREATE TABLE IF NOT EXISTS broadcast_reads (
+        user_id INTEGER NOT NULL,
+        broadcast_id INTEGER NOT NULL,
+        read_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (user_id, broadcast_id)
     )""")
 
     c.execute("SELECT * FROM users WHERE username = ?", (ADMIN_USERNAME,))
@@ -151,6 +164,21 @@ def current_user():
     return dict(u) if u else None
 
 
+def get_unread_broadcasts(user_id):
+    """Return broadcast messages this user hasn't seen."""
+    conn = get_db()
+    rows = conn.execute("""
+        SELECT b.id, b.message, b.created_at
+        FROM broadcasts b
+        WHERE b.id NOT IN (
+            SELECT broadcast_id FROM broadcast_reads WHERE user_id = ?
+        )
+        ORDER BY b.id DESC
+    """, (user_id,)).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
 # ============================================================
 # BASE STYLE
 # ============================================================
@@ -169,12 +197,22 @@ h1 { background: linear-gradient(90deg, #00f2fe, #4facfe); -webkit-background-cl
     flex-wrap: wrap; gap: 10px; backdrop-filter: blur(10px);
 }
 .navbar .brand { font-size: 1.1rem; font-weight: bold; color: #4facfe; }
-.navbar .links { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
+.navbar .links { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 .navbar .links a, .navbar .links span {
     font-size: 0.9rem; color: #ccc; padding: 6px 12px; border-radius: 6px;
     transition: all 0.2s;
 }
 .navbar .links a:hover { background: rgba(79,172,254,0.15); color: #fff; text-decoration: none; }
+.credit-badge {
+    background: linear-gradient(90deg, #ffd700, #ffb300);
+    color: #000 !important; font-weight: bold;
+    padding: 6px 14px !important; border-radius: 20px;
+    display: inline-block; animation: pulse 2s infinite;
+}
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,215,0,0.5); }
+    50% { box-shadow: 0 0 0 8px rgba(255,215,0,0); }
+}
 .btn {
     padding: 10px 20px; border-radius: 8px; border: none;
     background: linear-gradient(90deg, #00f2fe, #4facfe);
@@ -201,17 +239,42 @@ table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
 table th, table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.08); }
 table th { color: #4facfe; font-weight: 600; background: rgba(0,0,0,0.2); }
 table tr:hover { background: rgba(255,255,255,0.03); }
+.notif-bell {
+    position: relative; padding: 6px 12px !important;
+    background: rgba(255,200,0,0.2) !important; border-radius: 20px;
+}
+.notif-bell .dot {
+    position: absolute; top: 2px; right: 4px; width: 8px; height: 8px;
+    background: #ff4444; border-radius: 50%; animation: blink 1s infinite;
+}
+@keyframes blink { 50% { opacity: 0.3; } }
+.broadcast-card {
+    background: linear-gradient(135deg, rgba(255,200,0,0.15), rgba(255,100,0,0.1));
+    border-left: 4px solid #ffc800; padding: 14px; border-radius: 10px; margin-bottom: 10px;
+}
 </style>
 """
 
 
 def render_page(title, content, extra_head=""):
     user = current_user()
-    nav_user = ""
+    unread_count = 0
     if user:
+        unread_count = len(get_unread_broadcasts(user['id']))
+
+    if user:
+        credit_html = f'<span class="credit-badge">💰 {user["credits"]} Credits</span>'
+        notif_html = ""
+        if unread_count > 0:
+            notif_html = f'<a href="/inbox" class="notif-bell">🔔 Inbox<span class="dot"></span> ({unread_count})</a>'
+        else:
+            notif_html = '<a href="/inbox">🔔 Inbox</a>'
+
         nav_user = f'''
+            {credit_html}
             <a href="/buy">🛒 Buy</a>
             <a href="/history">📜 History</a>
+            {notif_html}
             {"<a href='/admin'>⚙️ Admin</a>" if user["is_admin"] else ""}
             <a href="/logout">🚪 Logout ({user["username"]})</a>
         '''
@@ -312,17 +375,54 @@ def logout():
 
 
 # ============================================================
+# CREDIT API (live refresh)
+# ============================================================
+@app.route('/api/credits')
+@login_required
+def api_credits():
+    conn = get_db()
+    u = conn.execute("SELECT credits FROM users WHERE id=?", (session['user_id'],)).fetchone()
+    conn.close()
+    return jsonify({"credits": u['credits'] if u else 0})
+
+
+# ============================================================
 # MAIN DASHBOARD
 # ============================================================
 @app.route('/')
 @login_required
 def index():
     user = current_user()
+    unread = get_unread_broadcasts(user['id'])
+
+    broadcast_html = ""
+    if unread:
+        broadcast_html = '<div style="margin-bottom:20px;">'
+        for b in unread[:3]:
+            broadcast_html += f'''
+            <div class="broadcast-card">
+                <div style="font-weight:bold;color:#ffc800;margin-bottom:5px;">📢 Admin Message</div>
+                <div style="color:#eee;line-height:1.5;">{b["message"]}</div>
+                <div style="font-size:.75rem;color:#888;margin-top:6px;">{b["created_at"]}</div>
+            </div>
+            '''
+        if len(unread) > 3:
+            broadcast_html += f'<p style="text-align:center;color:#aaa;"><a href="/inbox">+{len(unread)-3} more →</a></p>'
+        broadcast_html += '</div>'
+
     content = f"""
-    <h1 style="text-align:center;font-size:1.8rem;margin-top:20px;">🕵️ Ritesh OSINT Toolkit</h1>
-    <p class="subtitle" style="text-align:center;margin-bottom:25px;">
-        Welcome, <b>{user['username']}</b>! • {len(ENDPOINTS)} tools available
-    </p>
+    {broadcast_html}
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px;">
+        <div>
+            <h1 style="font-size:1.6rem;">🕵️ Welcome, {user['username']}!</h1>
+            <p class="subtitle" style="margin-top:5px;">{len(ENDPOINTS)} tools available</p>
+        </div>
+        <div style="text-align:right;">
+            <div style="color:#aaa;font-size:.8rem;">Your Balance</div>
+            <div id="dashCredits" style="font-size:2rem;font-weight:bold;background:linear-gradient(90deg,#ffd700,#ffb300);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">💰 {user['credits']}</div>
+            <a href="/buy" class="btn" style="margin-top:8px;padding:6px 14px;font-size:.85rem;">+ Buy Credits</a>
+        </div>
+    </div>
 
     <div class="tabs" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:20px;">
         <button class="tab-btn active" data-cat="ALL" onclick="filterCat('ALL', this)">🌐 All</button>
@@ -339,6 +439,7 @@ def index():
                  onclick="selectTool('{key}', '{cfg['label'].replace(chr(39), '')}', '{cfg['placeholder']}', this)"
                  style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:14px;cursor:pointer;transition:all .2s;">
                 <div style="font-size:.95rem;font-weight:600;color:#eee;">{cfg['label']}</div>
+                <div style="font-size:.75rem;color:#888;margin-top:4px;">Cost: {cfg['cost']} credits</div>
             </div>
             """
 
@@ -377,6 +478,19 @@ def index():
     }
     document.getElementById('queryInput').addEventListener('keypress', e => { if (e.key === 'Enter') runSearch(); });
 
+    async function refreshCredits() {
+        try {
+            const r = await fetch('/api/credits');
+            const d = await r.json();
+            const el = document.getElementById('dashCredits');
+            if (el) el.textContent = '💰 ' + d.credits;
+            // Also update navbar badge
+            document.querySelectorAll('.credit-badge').forEach(b => {
+                b.textContent = '💰 ' + d.credits + ' Credits';
+            });
+        } catch (e) {}
+    }
+
     async function runSearch() {
         if (!selectedTool) { alert('Pehle tool select karo'); return; }
         const q = document.getElementById('queryInput').value.trim();
@@ -395,7 +509,9 @@ def index():
             out.innerHTML = `
                 <div style="background:rgba(0,0,0,0.3);padding:10px 14px;border-radius:8px;font-family:monospace;font-size:.78rem;color:#7dd3fc;margin-bottom:15px;word-break:break-all;border-left:3px solid #4facfe;">🔗 ${data.url}</div>
                 <div class="card"><pre style="white-space:pre-wrap;word-break:break-word;font-size:.82rem;line-height:1.6;color:#b8f0ff;">${escapeHtml(data.pretty)}</pre></div>
+                <p style="text-align:center;color:#aaa;font-size:.85rem;margin-top:10px;">💰 Charged: ${data.cost} credits • Remaining: ${data.remaining}</p>
             `;
+            refreshCredits();
         } catch (err) {
             out.innerHTML = `<div class="error">❌ Error: ${err.message}</div>`;
         } finally { btn.disabled = false; }
@@ -409,7 +525,7 @@ def index():
 
 
 # ============================================================
-# API LOOKUP (with credit deduction, no promotion text)
+# API LOOKUP
 # ============================================================
 @app.route('/api/lookup')
 @login_required
@@ -435,12 +551,9 @@ def lookup():
 
     if user['credits'] < cost:
         conn.close()
-        return jsonify({"success": False, "message": "Insufficient credits. Please buy more."})
+        return jsonify({"success": False, "message": f"Insufficient credits. Need {cost}, have {user['credits']}. Please buy more."})
 
     url = f"{API_BASE}/{cfg['path']}?{cfg['param']}={q}&key={API_KEY}"
-    if "extra" in cfg:
-        for k, v in cfg["extra"].items():
-            url += f"&{k}={v}"
 
     try:
         r = requests.get(url, timeout=TIMEOUT)
@@ -453,7 +566,6 @@ def lookup():
         else:
             data = r.text
 
-        # Remove unwanted fields from response
         if isinstance(data, dict):
             for k in ('credit_limit', 'credit', 'bot_username', 'channel_link',
                       'channel', 'username', 'bot', 'join', 'owner', 'rate_limit',
@@ -463,7 +575,6 @@ def lookup():
 
         pretty = json.dumps(data, indent=2, ensure_ascii=False) if isinstance(data, (dict, list)) else str(data)
 
-        # Remove all promotion / channel / username references
         unwanted_patterns = [
             '@SADAURA4U', 'SADAURA4U', 'sadaura4u',
             '@shiva_158', 'shiva_158',
@@ -479,9 +590,7 @@ def lookup():
         ]
         for pattern in unwanted_patterns:
             pretty = pretty.replace(pattern, '')
-            pretty = pretty.replace(pattern.lower(), '')
 
-        # Clean up empty lines left after removals
         pretty = '\n'.join(line for line in pretty.splitlines() if line.strip())
 
         new_credits = user['credits'] - cost
@@ -495,7 +604,9 @@ def lookup():
             "success": True,
             "status": r.status_code,
             "pretty": pretty,
-            "url": f"{API_BASE}/{cfg['path']}?{cfg['param']}={q}&key=***"
+            "url": f"{API_BASE}/{cfg['path']}?{cfg['param']}={q}&key=***",
+            "cost": cost,
+            "remaining": new_credits,
         })
 
     except requests.exceptions.Timeout:
@@ -516,7 +627,7 @@ def buy():
     content = f"""
     <h1 style="text-align:center;font-size:1.6rem;margin:20px 0;">🛒 Buy Credits</h1>
     <p class="subtitle" style="text-align:center;margin-bottom:25px;">
-        Current Balance: <b>{user['credits']} credits</b>
+        Current Balance: <b style="color:#ffd700;">💰 {user['credits']} credits</b>
     </p>
 
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:15px;margin-bottom:30px;">
@@ -605,7 +716,6 @@ def submit_payment():
 
     pkg = next((p for p in PACKAGES if p['id'] == pkg_id), None)
     if not pkg or not utr:
-        flash("Invalid data", "error")
         return redirect(url_for('buy'))
 
     conn = get_db()
@@ -649,6 +759,7 @@ def history():
             <td>{r['id']}</td>
             <td>{r['tool']}</td>
             <td style="font-family:monospace;">{r['query']}</td>
+            <td>-{r['cost']}</td>
             <td>{r['created_at']}</td>
         </tr>
         """
@@ -657,12 +768,54 @@ def history():
     <h1 style="text-align:center;font-size:1.6rem;margin:20px 0;">📜 Search History</h1>
     <div class="card">
         <table>
-            <tr><th>#</th><th>Tool</th><th>Query</th><th>Time</th></tr>
-            {rows_html or '<tr><td colspan="4" style="text-align:center;color:#888;">No history yet</td></tr>'}
+            <tr><th>#</th><th>Tool</th><th>Query</th><th>Cost</th><th>Time</th></tr>
+            {rows_html or '<tr><td colspan="5" style="text-align:center;color:#888;">No history yet</td></tr>'}
         </table>
     </div>
     """
     return render_page("History", content)
+
+
+# ============================================================
+# INBOX (broadcasts for users)
+# ============================================================
+@app.route('/inbox')
+@login_required
+def inbox():
+    user_id = session['user_id']
+    messages = get_unread_broadcasts(user_id)
+
+    # Mark all as read
+    conn = get_db()
+    for m in messages:
+        try:
+            conn.execute("INSERT OR IGNORE INTO broadcast_reads (user_id, broadcast_id) VALUES (?, ?)",
+                         (user_id, m['id']))
+        except Exception:
+            pass
+    conn.commit()
+
+    # Fetch all messages (read + unread) for display
+    all_msgs = conn.execute("SELECT * FROM broadcasts ORDER BY id DESC LIMIT 50").fetchall()
+    conn.close()
+
+    msgs_html = ""
+    for m in all_msgs:
+        msgs_html += f"""
+        <div class="broadcast-card" style="margin-bottom:12px;">
+            <div style="font-weight:bold;color:#ffc800;margin-bottom:5px;">📢 Admin Message</div>
+            <div style="color:#eee;line-height:1.6;white-space:pre-wrap;">{m['message']}</div>
+            <div style="font-size:.75rem;color:#888;margin-top:8px;">{m['created_at']}</div>
+        </div>
+        """
+
+    content = f"""
+    <h1 style="text-align:center;font-size:1.6rem;margin:20px 0;">🔔 Inbox</h1>
+    <div class="card">
+        {msgs_html or '<p style="text-align:center;color:#888;">No messages yet.</p>'}
+    </div>
+    """
+    return render_page("Inbox", content)
 
 
 # ============================================================
@@ -676,11 +829,13 @@ def admin():
     payments = conn.execute("""SELECT p.*, u.username FROM payments p 
                                JOIN users u ON u.id = p.user_id 
                                ORDER BY p.id DESC LIMIT 50""").fetchall()
+    broadcasts = conn.execute("SELECT * FROM broadcasts ORDER BY id DESC LIMIT 20").fetchall()
     stats = {
         "total_users": conn.execute("SELECT COUNT(*) c FROM users").fetchone()['c'],
         "total_searches": conn.execute("SELECT COUNT(*) c FROM history").fetchone()['c'],
         "pending_payments": conn.execute("SELECT COUNT(*) c FROM payments WHERE status='pending'").fetchone()['c'],
         "revenue": conn.execute("SELECT COALESCE(SUM(amount),0) s FROM payments WHERE status='approved'").fetchone()['s'],
+        "total_broadcasts": conn.execute("SELECT COUNT(*) c FROM broadcasts").fetchone()['c'],
     }
     conn.close()
 
@@ -728,14 +883,53 @@ def admin():
         </tr>
         """
 
+    broadcast_history = ""
+    for b in broadcasts:
+        preview = b['message'][:120].replace('\n', ' ')
+        broadcast_history += f"""
+        <tr>
+            <td>{b['id']}</td>
+            <td style="max-width:500px;">{preview}{'…' if len(b['message'])>120 else ''}</td>
+            <td>{b['created_at']}</td>
+            <td>
+                <form method="POST" action="/admin/delete-broadcast" style="display:inline;">
+                    <input type="hidden" name="bid" value="{b['id']}">
+                    <button class="btn btn-danger" style="padding:4px 10px;font-size:.7rem;">🗑 Delete</button>
+                </form>
+            </td>
+        </tr>
+        """
+
     content = f"""
     <h1 style="text-align:center;font-size:1.6rem;margin:20px 0;">⚙️ Admin Panel</h1>
 
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:20px;">
-        <div class="card"><div style="color:#aaa;font-size:.8rem;">Total Users</div><div style="font-size:1.8rem;color:#4facfe;font-weight:bold;">{stats['total_users']}</div></div>
-        <div class="card"><div style="color:#aaa;font-size:.8rem;">Total Searches</div><div style="font-size:1.8rem;color:#4facfe;font-weight:bold;">{stats['total_searches']}</div></div>
-        <div class="card"><div style="color:#aaa;font-size:.8rem;">Pending Payments</div><div style="font-size:1.8rem;color:#ffc800;font-weight:bold;">{stats['pending_payments']}</div></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:20px;">
+        <div class="card"><div style="color:#aaa;font-size:.8rem;">Users</div><div style="font-size:1.8rem;color:#4facfe;font-weight:bold;">{stats['total_users']}</div></div>
+        <div class="card"><div style="color:#aaa;font-size:.8rem;">Searches</div><div style="font-size:1.8rem;color:#4facfe;font-weight:bold;">{stats['total_searches']}</div></div>
+        <div class="card"><div style="color:#aaa;font-size:.8rem;">Pending Pay</div><div style="font-size:1.8rem;color:#ffc800;font-weight:bold;">{stats['pending_payments']}</div></div>
         <div class="card"><div style="color:#aaa;font-size:.8rem;">Revenue (₹)</div><div style="font-size:1.8rem;color:#22c55e;font-weight:bold;">{stats['revenue']}</div></div>
+        <div class="card"><div style="color:#aaa;font-size:.8rem;">Broadcasts</div><div style="font-size:1.8rem;color:#c084fc;font-weight:bold;">{stats['total_broadcasts']}</div></div>
+    </div>
+
+    <!-- ============ BROADCAST ============ -->
+    <div class="card" style="border:2px solid #ffc800;">
+        <h2 style="font-size:1.15rem;margin-bottom:12px;color:#ffc800;">📢 Broadcast Message (Send to All)</h2>
+        <form method="POST" action="/admin/broadcast">
+            <textarea class="input" name="message" rows="4" placeholder="Yahan message likho... Sabhi users ko inbox me dikhega." required
+                      style="resize:vertical;font-family:inherit;margin-bottom:10px;"></textarea>
+            <button class="btn" style="width:100%;">📤 Send to All Users</button>
+        </form>
+        <p style="color:#888;font-size:.8rem;margin-top:10px;">Note: Ye message sabhi users ke Inbox me chala jayega aur unke dashboard par bhi dikhega.</p>
+    </div>
+
+    <div class="card">
+        <h2 style="font-size:1.15rem;margin-bottom:12px;color:#00f2fe;">📜 Recent Broadcasts</h2>
+        <div style="overflow-x:auto;">
+            <table>
+                <tr><th>ID</th><th>Message</th><th>Time</th><th>Action</th></tr>
+                {broadcast_history or '<tr><td colspan="4" style="text-align:center;color:#888;">No broadcasts yet</td></tr>'}
+            </table>
+        </div>
     </div>
 
     <div class="card">
@@ -773,12 +967,16 @@ def admin():
 @app.route('/admin/add-credits', methods=['POST'])
 @admin_required
 def admin_add_credits():
-    uid = request.form.get('user_id')
-    amt = int(request.form.get('amount', 0))
-    conn = get_db()
-    conn.execute("UPDATE users SET credits = credits + ? WHERE id = ?", (amt, uid))
-    conn.commit()
-    conn.close()
+    try:
+        uid = int(request.form.get('user_id', 0))
+        amt = int(request.form.get('amount', 0))
+        if uid and amt:
+            conn = get_db()
+            conn.execute("UPDATE users SET credits = MAX(0, credits + ?) WHERE id = ?", (amt, uid))
+            conn.commit()
+            conn.close()
+    except Exception:
+        pass
     return redirect(url_for('admin'))
 
 
@@ -805,6 +1003,33 @@ def admin_payment_action():
 
 
 # ============================================================
+# ADMIN BROADCAST
+# ============================================================
+@app.route('/admin/broadcast', methods=['POST'])
+@admin_required
+def admin_broadcast():
+    message = request.form.get('message', '').strip()
+    if message:
+        conn = get_db()
+        conn.execute("INSERT INTO broadcasts (message) VALUES (?)", (message,))
+        conn.commit()
+        conn.close()
+    return redirect(url_for('admin'))
+
+
+@app.route('/admin/delete-broadcast', methods=['POST'])
+@admin_required
+def admin_delete_broadcast():
+    bid = request.form.get('bid')
+    conn = get_db()
+    conn.execute("DELETE FROM broadcasts WHERE id=?", (bid,))
+    conn.execute("DELETE FROM broadcast_reads WHERE broadcast_id=?", (bid,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('admin'))
+
+
+# ============================================================
 # STATIC
 # ============================================================
 @app.route('/static/<path:filename>')
@@ -822,9 +1047,8 @@ if __name__ == '__main__':
     print("🕵️  Ritesh OSINT Toolkit")
     print("="*60)
     print(f"🌐 URL        : http://127.0.0.1:8080")
-    print(f"📦 Tools      : {len(ENDPOINTS)} APIs (Number, Email, Aadhaar)")
+    print(f"📦 Tools      : {len(ENDPOINTS)} APIs")
     print(f"👑 Admin      : {ADMIN_USERNAME}")
     print(f"💰 UPI        : {UPI_ID}")
-    print(f"📷 QR Image   : static/{QR_IMAGE}")
     print("="*60 + "\n")
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))
