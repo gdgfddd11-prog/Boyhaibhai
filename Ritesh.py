@@ -33,8 +33,8 @@ STATIC_DIR.mkdir(exist_ok=True)
 UPI_ID = "riteshgiri7930@okhdfcbank"
 UPI_NAME = "Ritesh Giri"
 QR_IMAGE = "qr.png"
-ADMIN_USERNAME = "admin"
-ADMIN_PASSWORD = "admin@12345"
+ADMIN_USERNAME = "@SADAURA4U"
+ADMIN_PASSWORD = "ritesh111"
 
 # Credit Packages (₹ -> credits)
 PACKAGES = [
@@ -230,7 +230,7 @@ def render_page(title, content, extra_head=""):
 </head>
 <body>
 <div class="navbar">
-    <a href="/" class="brand">🕵️ OSINT Toolkit</a>
+    <a href="/" class="brand">🕵️ Ritesh OSINT Toolkit</a>
     <div class="links">{nav_user}</div>
 </div>
 <div class="container">{content}</div>
@@ -319,7 +319,7 @@ def logout():
 def index():
     user = current_user()
     content = f"""
-    <h1 style="text-align:center;font-size:1.8rem;margin-top:20px;">🕵️ OSINT Toolkit</h1>
+    <h1 style="text-align:center;font-size:1.8rem;margin-top:20px;">🕵️ Ritesh OSINT Toolkit</h1>
     <p class="subtitle" style="text-align:center;margin-bottom:25px;">
         Welcome, <b>{user['username']}</b>! • {len(ENDPOINTS)} tools available
     </p>
@@ -819,7 +819,7 @@ init_db()
 
 if __name__ == '__main__':
     print("\n" + "="*60)
-    print("🕵️  OSINT Toolkit")
+    print("🕵️  Ritesh OSINT Toolkit")
     print("="*60)
     print(f"🌐 URL        : http://127.0.0.1:8080")
     print(f"📦 Tools      : {len(ENDPOINTS)} APIs (Number, Email, Aadhaar)")
