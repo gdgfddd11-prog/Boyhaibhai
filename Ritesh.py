@@ -1,5 +1,5 @@
 """
-🕵️ Ritesh OSINT Toolkit - All-in-One (Updated with New API)
+🕵️ Ritesh OSINT Toolkit - All-in-One
 Features: User Auth + Credits + Admin Panel + UPI/QR Payment
 Run: python Ritesh.py
 """
@@ -33,8 +33,8 @@ STATIC_DIR.mkdir(exist_ok=True)
 UPI_ID = "riteshgiri7930@okhdfcbank"
 UPI_NAME = "Ritesh Giri"
 QR_IMAGE = "qr.png"
-ADMIN_USERNAME = "@SADAURA4U"
-ADMIN_PASSWORD = "ritesh111"
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = "admin@12345"
 
 # Credit Packages (₹ -> credits)
 PACKAGES = [
@@ -49,10 +49,12 @@ PACKAGES = [
 DEFAULT_COST = 1
 
 # ============================================================
-# ENDPOINTS - New API endpoints
+# ENDPOINTS - Updated with Email & Aadhaar
 # ============================================================
 ENDPOINTS = {
-    "num":  {"path": "num",  "param": "number", "label": "📞 Number Lookup",  "placeholder": "9876543210", "category": "📱 Phone", "cost": 2},
+    "num":    {"path": "num",    "param": "number", "label": "📞 Number Lookup",  "placeholder": "9876543210",        "category": "📱 Phone",  "cost": 2},
+    "email":  {"path": "email",  "param": "value",  "label": "📧 Email Lookup",   "placeholder": "test@example.com",  "category": "📧 Email",  "cost": 2},
+    "aadhar": {"path": "aadhaar","param": "value",  "label": "🆔 Aadhaar Lookup", "placeholder": "123456789012",      "category": "🆔 Identity","cost": 3},
 }
 
 GROUPED = {}
@@ -173,11 +175,6 @@ h1 { background: linear-gradient(90deg, #00f2fe, #4facfe); -webkit-background-cl
     transition: all 0.2s;
 }
 .navbar .links a:hover { background: rgba(79,172,254,0.15); color: #fff; text-decoration: none; }
-.credit-badge {
-    background: linear-gradient(90deg, #00f2fe, #4facfe);
-    color: #000; font-weight: bold; padding: 6px 12px; border-radius: 20px;
-    font-size: 0.85rem;
-}
 .btn {
     padding: 10px 20px; border-radius: 8px; border: none;
     background: linear-gradient(90deg, #00f2fe, #4facfe);
@@ -213,7 +210,6 @@ def render_page(title, content, extra_head=""):
     nav_user = ""
     if user:
         nav_user = f'''
-            <span class="credit-badge">💰 {user["credits"]} Credits</span>
             <a href="/buy">🛒 Buy</a>
             <a href="/history">📜 History</a>
             {"<a href='/admin'>⚙️ Admin</a>" if user["is_admin"] else ""}
@@ -234,7 +230,7 @@ def render_page(title, content, extra_head=""):
 </head>
 <body>
 <div class="navbar">
-    <a href="/" class="brand">🕵️ Ritesh OSINT Toolkit</a>
+    <a href="/" class="brand">🕵️ OSINT Toolkit</a>
     <div class="links">{nav_user}</div>
 </div>
 <div class="container">{content}</div>
@@ -323,9 +319,9 @@ def logout():
 def index():
     user = current_user()
     content = f"""
-    <h1 style="text-align:center;font-size:1.8rem;margin-top:20px;">🕵️ Ritesh OSINT Toolkit</h1>
+    <h1 style="text-align:center;font-size:1.8rem;margin-top:20px;">🕵️ OSINT Toolkit</h1>
     <p class="subtitle" style="text-align:center;margin-bottom:25px;">
-        Welcome, <b>{user['username']}</b>! • {len(ENDPOINTS)} tools available • Har tool ka alag credit cost hai
+        Welcome, <b>{user['username']}</b>! • {len(ENDPOINTS)} tools available
     </p>
 
     <div class="tabs" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:20px;">
@@ -338,14 +334,11 @@ def index():
 
     for cat, items in GROUPED.items():
         for key, cfg in items:
-            cost = cfg.get('cost', DEFAULT_COST)
             content += f"""
             <div class="tool-card" data-cat="{cat}" data-key="{key}"
                  onclick="selectTool('{key}', '{cfg['label'].replace(chr(39), '')}', '{cfg['placeholder']}', this)"
-                 style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;cursor:pointer;transition:all .2s;">
-                <div style="font-size:.9rem;font-weight:600;color:#eee;">{cfg['label']}</div>
-                <div style="font-size:.7rem;color:#4facfe;margin-top:6px;">💰 Cost: {cost} credits</div>
-                <div style="font-size:.7rem;color:#666;margin-top:2px;">/api/{cfg['path']}</div>
+                 style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:14px;cursor:pointer;transition:all .2s;">
+                <div style="font-size:.95rem;font-weight:600;color:#eee;">{cfg['label']}</div>
             </div>
             """
 
@@ -371,7 +364,10 @@ def index():
     }
     function selectTool(key, label, placeholder, el) {
         selectedTool = key;
-        document.querySelectorAll('.tool-card').forEach(c => c.style.borderColor = 'rgba(255,255,255,0.08)');
+        document.querySelectorAll('.tool-card').forEach(c => {
+            c.style.borderColor = 'rgba(255,255,255,0.08)';
+            c.style.background = 'rgba(255,255,255,0.05)';
+        });
         el.style.borderColor = '#00f2fe';
         el.style.background = 'rgba(79,172,254,0.15)';
         const input = document.getElementById('queryInput');
@@ -396,11 +392,8 @@ def index():
                 out.innerHTML = `<div class="error">❌ ${data.message}</div>`;
                 return;
             }
-            const badge = document.querySelector('.credit-badge');
-            if (badge && data.remaining_credits !== undefined) badge.textContent = `💰 ${data.remaining_credits} Credits`;
             out.innerHTML = `
                 <div style="background:rgba(0,0,0,0.3);padding:10px 14px;border-radius:8px;font-family:monospace;font-size:.78rem;color:#7dd3fc;margin-bottom:15px;word-break:break-all;border-left:3px solid #4facfe;">🔗 ${data.url}</div>
-                <div style="background:rgba(255,200,0,0.1);border-left:4px solid #ffc800;padding:10px;border-radius:8px;margin-bottom:12px;font-size:.85rem;">💸 ${data.cost} credits deducted • Remaining: <b>${data.remaining_credits}</b></div>
                 <div class="card"><pre style="white-space:pre-wrap;word-break:break-word;font-size:.82rem;line-height:1.6;color:#b8f0ff;">${escapeHtml(data.pretty)}</pre></div>
             `;
         } catch (err) {
@@ -416,7 +409,7 @@ def index():
 
 
 # ============================================================
-# API LOOKUP (with credit deduction)
+# API LOOKUP (with credit deduction, no promotion text)
 # ============================================================
 @app.route('/api/lookup')
 @login_required
@@ -442,7 +435,7 @@ def lookup():
 
     if user['credits'] < cost:
         conn.close()
-        return jsonify({"success": False, "message": f"Insufficient credits. Need {cost}, you have {user['credits']}. Please buy more."})
+        return jsonify({"success": False, "message": "Insufficient credits. Please buy more."})
 
     url = f"{API_BASE}/{cfg['path']}?{cfg['param']}={q}&key={API_KEY}"
     if "extra" in cfg:
@@ -462,40 +455,34 @@ def lookup():
 
         # Remove unwanted fields from response
         if isinstance(data, dict):
-            data.pop('credit_limit', None)
-            data.pop('credit', None)
-            data.pop('bot_username', None)
-            data.pop('channel_link', None)
-            data.pop('channel', None)
-            data.pop('username', None)
-            data.pop('bot', None)
-            data.pop('join', None)
-            data.pop('owner', None)
-            data.pop('rate_limit', None)
+            for k in ('credit_limit', 'credit', 'bot_username', 'channel_link',
+                      'channel', 'username', 'bot', 'join', 'owner', 'rate_limit',
+                      'developer', 'dev', 'powered_by', 'powered', 'author',
+                      'telegram', 'tg', 'channel_username', 'bot_name'):
+                data.pop(k, None)
 
         pretty = json.dumps(data, indent=2, ensure_ascii=False) if isinstance(data, (dict, list)) else str(data)
 
-        # Remove common unwanted text patterns
+        # Remove all promotion / channel / username references
         unwanted_patterns = [
-            'by @SADAURA4U',
-            '@SADAURA4U',
-            'SADAURA4U',
-            't.me/',
-            'telegram',
-            'Telegram',
-            'bot_username', '@Osintinfooobot'
-            'channel_link', 'https://t.me/osintinfoooo'
-            'Join @',
-            'join @',
-            'Owner:', '@shiva_158'
-            'owner:', '@shiva_158'
-            'Channel:', 'https://t.me/osintinfoooo'
-            'channel:', 'https://t.me/osintinfoooo'
-            'Bot:', '@Osintinfooobot'
-            'bot:', '@Osintinfooobot'
+            '@SADAURA4U', 'SADAURA4U', 'sadaura4u',
+            '@shiva_158', 'shiva_158',
+            '@Osintinfooobot', 'Osintinfooobot',
+            't.me/', 'https://t.me/', 'telegram.me/',
+            't.me/osintinfoooo', 'osintinfoooo',
+            'Telegram', 'telegram', 'TG Bot', 'tg bot',
+            'Join @', 'join @', 'Join our', 'join our',
+            'Owner:', 'owner:', 'Channel:', 'channel:', 'Bot:', 'bot:',
+            'Follow @', 'follow @', 'Subscribe', 'subscribe',
+            'powered by', 'Powered by', 'Powered By',
+            'credit_limit', 'credit limit', 'rate_limit', 'rate limit',
         ]
         for pattern in unwanted_patterns:
             pretty = pretty.replace(pattern, '')
+            pretty = pretty.replace(pattern.lower(), '')
+
+        # Clean up empty lines left after removals
+        pretty = '\n'.join(line for line in pretty.splitlines() if line.strip())
 
         new_credits = user['credits'] - cost
         conn.execute("UPDATE users SET credits=? WHERE id=?", (new_credits, user_id))
@@ -508,8 +495,7 @@ def lookup():
             "success": True,
             "status": r.status_code,
             "pretty": pretty,
-            "cost": cost,
-            "remaining_credits": new_credits
+            "url": f"{API_BASE}/{cfg['path']}?{cfg['param']}={q}&key=***"
         })
 
     except requests.exceptions.Timeout:
@@ -571,7 +557,7 @@ def buy():
                 </div>
                 <p style="margin-top:15px;color:#aaa;font-size:0.85rem;line-height:1.6;">
                     📌 Payment ke baad <b>UTR / Transaction ID</b> neeche form me daale.<br>
-                    ⏱ Admin verify karke credits add karega (usually 5-30 min).
+                    ⏱ Admin verify karke credits add karega.
                 </p>
                 <div style="margin-top:15px;display:flex;gap:10px;flex-wrap:wrap;">
                     <a href="upi://pay?pa={UPI_ID}&pn={UPI_NAME}&cu=INR" class="btn">📲 Open UPI App</a>
@@ -635,8 +621,7 @@ def submit_payment():
         <p style="color:#ccc;line-height:1.7;margin-bottom:20px;">
             UTR: <b>{utr}</b><br>
             Package: <b>₹{pkg['amount']} = {pkg['credits']} credits</b><br><br>
-            Admin verification ke baad credits add ho jayenge.<br>
-            Usually 5-30 minutes lagte hain.
+            Admin verification ke baad credits add ho jayenge.
         </p>
         <a href="/buy" class="btn">← Back to Buy</a>
     </div>
@@ -664,7 +649,6 @@ def history():
             <td>{r['id']}</td>
             <td>{r['tool']}</td>
             <td style="font-family:monospace;">{r['query']}</td>
-            <td>💰 {r['cost']}</td>
             <td>{r['created_at']}</td>
         </tr>
         """
@@ -673,8 +657,8 @@ def history():
     <h1 style="text-align:center;font-size:1.6rem;margin:20px 0;">📜 Search History</h1>
     <div class="card">
         <table>
-            <tr><th>#</th><th>Tool</th><th>Query</th><th>Cost</th><th>Time</th></tr>
-            {rows_html or '<tr><td colspan="5" style="text-align:center;color:#888;">No history yet</td></tr>'}
+            <tr><th>#</th><th>Tool</th><th>Query</th><th>Time</th></tr>
+            {rows_html or '<tr><td colspan="4" style="text-align:center;color:#888;">No history yet</td></tr>'}
         </table>
     </div>
     """
@@ -778,8 +762,6 @@ def admin():
         <h2 style="font-size:1.15rem;margin-bottom:12px;color:#00f2fe;">⚙️ Settings</h2>
         <p style="color:#aaa;font-size:.9rem;line-height:1.7;">
             • API Base: <code>{API_BASE}</code><br>
-            • API Key: <code>{API_KEY}</code><br>
-            • UPI ID: <b>{UPI_ID}</b><br>
             • Total APIs: <b>{len(ENDPOINTS)}</b><br>
             • QR Image: <code>static/{QR_IMAGE}</code>
         </p>
@@ -837,15 +819,12 @@ init_db()
 
 if __name__ == '__main__':
     print("\n" + "="*60)
-    print("🕵️  Ritesh OSINT Toolkit")
+    print("🕵️  OSINT Toolkit")
     print("="*60)
     print(f"🌐 URL        : http://127.0.0.1:8080")
-    print(f"📦 Tools      : {len(ENDPOINTS)} APIs")
-    print(f"👑 Admin      : {ADMIN_USERNAME} / {ADMIN_PASSWORD}")
+    print(f"📦 Tools      : {len(ENDPOINTS)} APIs (Number, Email, Aadhaar)")
+    print(f"👑 Admin      : {ADMIN_USERNAME}")
     print(f"💰 UPI        : {UPI_ID}")
     print(f"📷 QR Image   : static/{QR_IMAGE}")
-    print(f"🔑 API Base   : {API_BASE}")
-    print(f"🔑 API Key    : {API_KEY}")
     print("="*60 + "\n")
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))
-         
