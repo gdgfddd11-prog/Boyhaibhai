@@ -323,7 +323,7 @@ def logout():
 def index():
     user = current_user()
     content = f"""
-    <h1 style="text-align:center;font-size:1.8rem;margin-top:20px;">🕵️ OSINT Toolkit</h1>
+    <h1 style="text-align:center;font-size:1.8rem;margin-top:20px;">🕵️ Ritesh OSINT Toolkit</h1>
     <p class="subtitle" style="text-align:center;margin-bottom:25px;">
         Welcome, <b>{user['username']}</b>! • {len(ENDPOINTS)} tools available • Har tool ka alag credit cost hai
     </p>
