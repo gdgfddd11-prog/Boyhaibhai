@@ -12,6 +12,7 @@ import os
 import json
 import sqlite3
 import secrets
+import re
 from datetime import datetime
 from pathlib import Path
 
@@ -48,10 +49,13 @@ DEFAULT_COST = 1
 
 # ============================================================
 # ENDPOINTS  (Sarkari All Updates API)
+# FIXED: "api_name" = exact tool name in URL (?=api_name)
+#        "param"    = query parameter name
 # ============================================================
 ENDPOINTS = {
     # -------- Phone / Number --------
     "num_info": {
+        "api_name": "num_info",
         "param": "num",
         "label": "📞 Number Info",
         "placeholder": "9162516577",
@@ -59,6 +63,7 @@ ENDPOINTS = {
         "cost": 2,
     },
     "tg": {
+        "api_name": "tg",
         "param": "q",
         "label": "📨 Telegram to Number",
         "placeholder": "@Perfectamit65",
@@ -68,6 +73,7 @@ ENDPOINTS = {
 
     # -------- Vehicle --------
     "vehicle_full": {
+        "api_name": "vehicle_full",
         "param": "xr",
         "label": "🚗 Vehicle Full Info",
         "placeholder": "KL41V3504",
@@ -75,6 +81,7 @@ ENDPOINTS = {
         "cost": 3,
     },
     "vehicle_to_number": {
+        "api_name": "vehicle_to_number",
         "param": "xr",
         "label": "🔢 Vehicle to Number",
         "placeholder": "KL41V3504",
@@ -84,6 +91,7 @@ ENDPOINTS = {
 
     # -------- Identity / KYC --------
     "pan2dob_name": {
+        "api_name": "pan2dob_name",
         "param": "pan2dob_name",
         "label": "🆔 PAN → Name + DOB",
         "placeholder": "cnkpk7230d",
@@ -91,6 +99,7 @@ ENDPOINTS = {
         "cost": 3,
     },
     "aadhaar2pan": {
+        "api_name": "aadhaar2pan",
         "param": "aadhaar2pan",
         "label": "🪪 Aadhaar → PAN",
         "placeholder": "123456789012",
@@ -98,6 +107,7 @@ ENDPOINTS = {
         "cost": 3,
     },
     "addhaar2num": {
+        "api_name": "addhaar2num",
         "param": "q",
         "label": "📱 Aadhaar → Number",
         "placeholder": "123456789012",
@@ -107,6 +117,7 @@ ENDPOINTS = {
 
     # -------- Other --------
     "imei": {
+        "api_name": "imei",
         "param": "imei",
         "label": "📲 IMEI Info",
         "placeholder": "356938035643809",
@@ -114,6 +125,7 @@ ENDPOINTS = {
         "cost": 2,
     },
     "pincode": {
+        "api_name": "pincode",
         "param": "pincode",
         "label": "📍 Pincode Info",
         "placeholder": "110001",
@@ -121,6 +133,7 @@ ENDPOINTS = {
         "cost": 1,
     },
     "ifse": {
+        "api_name": "ifse",
         "param": "ifse",
         "label": "🏦 IFSC Info",
         "placeholder": "SBIN0001234",
@@ -324,6 +337,17 @@ table tr:hover { background: rgba(255,255,255,0.03); }
     background: linear-gradient(135deg, rgba(255,200,0,0.15), rgba(255,100,0,0.1));
     border-left: 4px solid #ffc800; padding: 14px; border-radius: 10px; margin-bottom: 10px;
 }
+.tab-btn {
+    padding: 8px 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.05); color: #ccc; cursor: pointer; font-size: 0.85rem;
+    transition: all 0.2s;
+}
+.tab-btn:hover { background: rgba(79,172,254,0.15); color: #fff; }
+.tab-btn.active {
+    background: linear-gradient(90deg, #00f2fe, #4facfe); color: #000; font-weight: bold;
+    border-color: transparent;
+}
+.tool-card:hover { border-color: #4facfe !important; transform: translateY(-2px); }
 </style>
 """
 
@@ -505,9 +529,10 @@ def index():
 
     for cat, items in GROUPED.items():
         for key, cfg in items:
+            safe_label = cfg['label'].replace("'", "")
             content += f"""
             <div class="tool-card" data-cat="{cat}" data-key="{key}"
-                 onclick="selectTool('{key}', '{cfg['label'].replace(chr(39), '')}', '{cfg['placeholder']}', this)"
+                 onclick="selectTool('{key}', '{safe_label}', '{cfg['placeholder']}', this)"
                  style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:14px;cursor:pointer;transition:all .2s;">
                 <div style="font-size:.95rem;font-weight:600;color:#eee;">{cfg['label']}</div>
                 <div style="font-size:.75rem;color:#888;margin-top:4px;">Cost: {cfg['cost']} credits</div>
@@ -534,7 +559,7 @@ def index():
             c.style.display = (cat === 'ALL' || c.dataset.cat === cat) ? '' : 'none';
         });
     }
-    function selectTool(key, label, placeholde, el) {
+    function selectTool(key, label, placeholder, el) {
         selectedTool = key;
         document.querySelectorAll('.tool-card').forEach(c => {
             c.style.borderColor = 'rgba(255,255,255,0.08)';
@@ -595,7 +620,7 @@ def index():
 
 
 # ============================================================
-# API LOOKUP  (with strong promotional filtering)
+# API LOOKUP  (FIXED URL + strong promotional filtering)
 # ============================================================
 @app.route('/api/lookup')
 @login_required
@@ -604,7 +629,7 @@ def lookup():
     q = request.args.get('q', '').strip()
 
     if tool not in ENDPOINTS:
-        return jsonify({"success": False, "message": "Invalid tool"}), 400
+        return jsonify({"success": False, "message": f"Invalid tool: {tool}"}), 400
     if not q:
         return jsonify({"success": False, "message": "Empty query"}), 400
 
@@ -623,18 +648,22 @@ def lookup():
         conn.close()
         return jsonify({"success": False, "message": f"Insufficient credits. Need {cost}, have {user['credits']}. Please buy more."})
 
-    # Build the request URL exactly as the API expects:
-    # https://api.sarkariallupdates.com/api?=<tool>&key=30day&<param>=<value>
-    url = f"{API_BASE}?={cfg['param']}&key={API_KEY}&{cfg['param']}={q}"
-    # For tools where the API uses ?=num_info style, the tool name itself is the endpoint.
-    # The docs show: ?=num_info&key=...&num=...
-    # We'll map tool -> first query name.
-    api_tool_name = tool  # e.g. num_info, vehicle_full ...
-    url = f"{API_BASE}?={api_tool_name}&key={API_KEY}&{cfg['param']}={q}"
+    # ============================================================
+    # FIXED URL CONSTRUCTION
+    # Format: https://api.sarkariallupdates.com/api?=<api_name>&key=30day&<param>=<value>
+    # Example: https://api.sarkariallupdates.com/api?=num_info&key=30day&num=9162516577
+    # ============================================================
+    api_name = cfg['api_name']
+    param = cfg['param']
+    url = f"{API_BASE}?={api_name}&key={API_KEY}&{param}={q}"
+
+    print(f"[LOOKUP] Tool={tool} | URL={url}")
 
     try:
         r = requests.get(url, timeout=TIMEOUT)
+        status_code = r.status_code
         ctype = r.headers.get('content-type', '')
+
         if 'application/json' in ctype:
             try:
                 data = r.json()
@@ -645,7 +674,6 @@ def lookup():
 
         # ---------- Strong promotional stripping ----------
         if isinstance(data, dict):
-            # Recursively remove unwanted keys
             unwanted_keys = {
                 'credit_limit', 'credit', 'bot_username', 'channel_link',
                 'channel', 'username', 'bot', 'join', 'owner', 'rate_limit',
@@ -653,7 +681,8 @@ def lookup():
                 'telegram', 'tg', 'channel_username', 'bot_name',
                 'promo', 'advertisement', 'sponsor', 'watermark', 'footer',
                 'header', 'join_us', 'our_channel', 'subscribe', 'follow',
-                'credit_used', 'credits_used', 'quota', 'remaining', 'limit'
+                'credit_used', 'credits_used', 'quota', 'remaining', 'limit',
+                'api_name', 'api', 'endpoint'
             }
             def clean_obj(obj):
                 if isinstance(obj, dict):
@@ -665,7 +694,7 @@ def lookup():
 
         pretty = json.dumps(data, indent=2, ensure_ascii=False) if isinstance(data, (dict, list)) else str(data)
 
-        # Remove any promotional text patterns (case-insensitive)
+        # Remove promotional patterns
         promo_patterns = [
             '@SADAURA4U', 'SADAURA4U', 'sadaura4u',
             '@shiva_158', 'shiva_158',
@@ -678,23 +707,47 @@ def lookup():
             'powered by', 'Powered by', 'Powered By',
             'credit_limit', 'credit limit', 'rate_limit', 'rate limit',
             'sarkariallupdates', 'sarkari all updates', 'api.sarkariallupdates.com',
-            'osintinfo', 'osint info', 'osint',
+            'osintinfo', 'osint info',
         ]
         for pattern in promo_patterns:
             pretty = pretty.replace(pattern, '')
 
-        # Remove Telegram-like usernames and channel mentions
-        import re
-        pretty = re.sub(r'@[A-Za-z0-9_]{4,}', '', pretty)               # @usernames
-        pretty = re.sub(r'https?://t\.me/\S+', '', pretty)              # t.me links
+        # Regex cleanup for @usernames and telegram links
+        pretty = re.sub(r'@[A-Za-z0-9_]{4,}', '', pretty)
+        pretty = re.sub(r'https?://t\.me/\S+', '', pretty)
         pretty = re.sub(r'\b(?:channel|group|bot)\s*[:\-]\s*\S+', '', pretty, flags=re.I)
         pretty = re.sub(r'\bjoin\s+\S+', '', pretty, flags=re.I)
 
-        # Remove empty lines / whitespace
+        # Remove empty lines
         pretty = '\n'.join(line for line in pretty.splitlines() if line.strip())
-        if not pretty.strip():
-            pretty = "No data returned (or all fields were promotional and stripped)."
 
+        if not pretty.strip():
+            pretty = "⚠️ No data returned (or all fields were promotional and stripped)."
+
+        # ---------- Detect API error response ----------
+        is_error = False
+        error_msg = ""
+        if status_code >= 400:
+            is_error = True
+            error_msg = f"API returned HTTP {status_code}"
+        elif isinstance(data, dict):
+            # Common error keys
+            for k in ('error', 'message', 'msg', 'status', 'success'):
+                if k in data and str(data[k]).lower() in ('false', 'error', 'failed', 'fail'):
+                    is_error = True
+                    error_msg = str(data.get('message', data.get('msg', 'API error')))
+                    break
+
+        # If API error — do NOT deduct credits
+        if is_error and ('error' in pretty.lower() or 'fail' in pretty.lower() or status_code >= 400):
+            conn.close()
+            return jsonify({
+                "success": False,
+                "message": f"{error_msg} — API Response: {pretty[:300]}",
+                "raw": pretty
+            })
+
+        # ---------- Success: deduct credits ----------
         new_credits = user['credits'] - cost
         conn.execute("UPDATE users SET credits=? WHERE id=?", (new_credits, user_id))
         conn.execute("INSERT INTO history (user_id, tool, query, cost) VALUES (?, ?, ?, ?)",
@@ -702,23 +755,34 @@ def lookup():
         conn.commit()
         conn.close()
 
+        # Mask the key in the displayed URL
+        safe_url = f"{API_BASE}?={api_name}&key=***&{param}={q}"
+
         return jsonify({
             "success": True,
-            "status": r.status_code,
+            "status": status_code,
             "pretty": pretty,
-            "url": f"{API_BASE}?={api_tool_name}&key=***&{cfg['param']}={q}",
+            "url": safe_url,
             "cost": cost,
             "remaining": new_credits,
         })
 
     except requests.exceptions.Timeout:
         conn.close()
-        return jsonify({"success": False, "message": "API timeout. Credit not deducted. Try again."}), 504
+        return jsonify({"success": False, "message": "⏱ API timeout. Credit NOT deducted. Try again."}), 504
+    except requests.exceptions.ConnectionError as e:
+        conn.close()
+        return jsonify({"success": False, "message": f"🌐 Connection error: {str(e)}. Credit NOT deducted."}), 503
     except Exception as e:
         conn.close()
-        return jsonify({"success": False, "message": f"Error: {str(e)}. Credit not deducted."}), 500
+        return jsonify({"success": False, "message": f"❌ Error: {str(e)}. Credit NOT deducted."}), 500
+```
 
+---
 
+📁 PART 2 — Copy this after Part 1
+
+```python
 # ============================================================
 # BUY CREDITS
 # ============================================================
@@ -781,7 +845,7 @@ def buy():
 
     <div class="card">
         <h2 style="font-size:1.2rem;margin-bottom:15px;color:#00f2fe;">📝 Submit Payment Proof</h2>
-        <form method="POST"action="/submit-payment">
+        <form method="POST" action="/submit-payment">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
                 <select name="package" class="input" required>
                     <option value="">-- Select Package --</option>
@@ -1011,7 +1075,6 @@ def admin():
         <div class="card"><div style="color:#aaa;font-size:.8rem;">Broadcasts</div><div style="font-size:1.8rem;color:#c084fc;font-weight:bold;">{stats['total_broadcasts']}</div></div>
     </div>
 
-    <!-- ============ BROADCAST ============ -->
     <div class="card" style="border:2px solid #ffc800;">
         <h2 style="font-size:1.15rem;margin-bottom:12px;color:#ffc800;">📢 Broadcast Message (Send to All)</h2>
         <form method="POST" action="/admin/broadcast">
