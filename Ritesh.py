@@ -1,5 +1,6 @@
+
 """
-🕵️ Ritesh OSINT Toolkit - All-in-One (FIXED + Broadcast + Credit Display + New APIs)
+🕵️ Ritesh OSINT Toolkit - All-in-One (FULLY FIXED)
 Run: python Ritesh.py
 """
 
@@ -12,7 +13,6 @@ import os
 import json
 import sqlite3
 import secrets
-import re
 from datetime import datetime
 from pathlib import Path
 
@@ -48,101 +48,71 @@ PACKAGES = [
 DEFAULT_COST = 1
 
 # ============================================================
-# ENDPOINTS  (Sarkari All Updates API)
-# FIXED: "api_name" = exact tool name in URL (?=api_name)
-#        "param"    = query parameter name
+# ENDPOINTS - All 10 APIs from sarkariallupdates.com
 # ============================================================
 ENDPOINTS = {
-    # -------- Phone / Number --------
     "num_info": {
-        "api_name": "num_info",
-        "param": "num",
-        "label": "📞 Number Info",
-        "placeholder": "9162516577",
-        "category": "📱 Phone",
-        "cost": 2,
+        "path": "", "param": "num", "api_name": "num_info",
+        "label": "📞 Number Info", "placeholder": "9162516577",
+        "category": "📱 Phone", "cost": 2,
+        "desc": "Get details from mobile number"
     },
-    "tg": {
-        "api_name": "tg",
-        "param": "q",
-        "label": "📨 Telegram to Number",
-        "placeholder": "@Perfectamit65",
-        "category": "📱 Phone",
-        "cost": 2,
-    },
-
-    # -------- Vehicle --------
     "vehicle_full": {
-        "api_name": "vehicle_full",
-        "param": "xr",
-        "label": "🚗 Vehicle Full Info",
-        "placeholder": "KL41V3504",
-        "category": "🚗 Vehicle",
-        "cost": 3,
+        "path": "", "param": "xr", "api_name": "vehicle_full",
+        "label": "🚗 Vehicle Full Info", "placeholder": "KL41V3504",
+        "category": "🚗 Vehicle", "cost": 2,
+        "desc": "Full vehicle registration details"
     },
     "vehicle_to_number": {
-        "api_name": "vehicle_to_number",
-        "param": "xr",
-        "label": "🔢 Vehicle to Number",
-        "placeholder": "KL41V3504",
-        "category": "🚗 Vehicle",
-        "cost": 2,
+        "path": "", "param": "xr", "api_name": "vehicle_to_number",
+        "label": "🔗 Vehicle → Number", "placeholder": "KL41V3504",
+        "category": "🚗 Vehicle", "cost": 2,
+        "desc": "Get owner number from vehicle"
     },
-
-    # -------- Identity / KYC --------
     "pan2dob_name": {
-        "api_name": "pan2dob_name",
-        "param": "pan2dob_name",
-        "label": "🆔 PAN → Name + DOB",
-        "placeholder": "cnkpk7230d",
-        "category": "🆔 Identity",
-        "cost": 3,
+        "path": "", "param": "pan2dob_name", "api_name": "pan2dob_name",
+        "label": "🆔 PAN 2 Name & DOB", "placeholder": "cnkpk7230d",
+        "category": "🆔 Identity", "cost": 3,
+        "desc": "PAN card to name and DOB"
     },
     "aadhaar2pan": {
-        "api_name": "aadhaar2pan",
-        "param": "aadhaar2pan",
-        "label": "🪪 Aadhaar → PAN",
-        "placeholder": "123456789012",
-        "category": "🆔 Identity",
-        "cost": 3,
+        "path": "", "param": "aadhaar2pan", "api_name": "aadhaar2pan",
+        "label": "🔗 Aadhaar → PAN", "placeholder": "123456789012",
+        "category": "🆔 Identity", "cost": 3,
+        "desc": "Get PAN from Aadhaar number"
     },
-    "addhaar2num": {
-        "api_name": "addhaar2num",
-        "param": "q",
-        "label": "📱 Aadhaar → Number",
-        "placeholder": "123456789012",
-        "category": "🆔 Identity",
-        "cost": 3,
-    },
-
-    # -------- Other --------
     "imei": {
-        "api_name": "imei",
-        "param": "imei",
-        "label": "📲 IMEI Info",
-        "placeholder": "356938035643809",
-        "category": "📲 Device",
-        "cost": 2,
+        "path": "", "param": "imei", "api_name": "imei",
+        "label": "📲 IMEI Info", "placeholder": "356938035643809",
+        "category": "📱 Phone", "cost": 2,
+        "desc": "IMEI number information"
     },
     "pincode": {
-        "api_name": "pincode",
-        "param": "pincode",
-        "label": "📍 Pincode Info",
-        "placeholder": "110001",
-        "category": "📍 Address",
-        "cost": 1,
+        "path": "", "param": "pincode", "api_name": "pincode",
+        "label": "📍 Pincode Info", "placeholder": "110001",
+        "category": "📍 Location", "cost": 1,
+        "desc": "Get area details from pincode"
     },
     "ifse": {
-        "api_name": "ifse",
-        "param": "ifse",
-        "label": "🏦 IFSC Info",
-        "placeholder": "SBIN0001234",
-        "category": "🏦 Banking",
-        "cost": 1,
+        "path": "", "param": "ifse", "api_name": "ifse",
+        "label": "🏦 IFSC Info", "placeholder": "SBIN0001234",
+        "category": "🏦 Banking", "cost": 1,
+        "desc": "Bank branch details from IFSC"
+    },
+    "tg": {
+        "path": "", "param": "q", "api_name": "tg",
+        "label": "✈️ TG → Number", "placeholder": "@username",
+        "category": "📱 Phone", "cost": 2,
+        "desc": "Telegram username to number"
+    },
+    "addhaar2num": {
+        "path": "", "param": "q", "api_name": "addhaar2num",
+        "label": "🔗 Aadhaar → Number", "placeholder": "123456789012",
+        "category": "🆔 Identity", "cost": 3,
+        "desc": "Get mobile number from Aadhaar"
     },
 }
 
-# Group by category for UI
 GROUPED = {}
 for k, v in ENDPOINTS.items():
     GROUPED.setdefault(v["category"], []).append((k, v))
@@ -265,7 +235,7 @@ def get_unread_broadcasts(user_id):
 
 
 # ============================================================
-# BASE STYLE
+# BASE STYLE - Colorful Buttons
 # ============================================================
 BASE_STYLE = """
 <style>
@@ -337,17 +307,65 @@ table tr:hover { background: rgba(255,255,255,0.03); }
     background: linear-gradient(135deg, rgba(255,200,0,0.15), rgba(255,100,0,0.1));
     border-left: 4px solid #ffc800; padding: 14px; border-radius: 10px; margin-bottom: 10px;
 }
+
+/* Colorful Tool Cards */
+.tool-card {
+    background: rgba(255,255,255,0.05);
+    border: 2px solid rgba(255,255,255,0.08);
+    border-radius: 12px; padding: 16px; cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative; overflow: hidden;
+}
+.tool-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    background: var(--accent, #4facfe);
+}
+.tool-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    border-color: var(--accent, #4facfe);
+}
+.tool-card .tool-name {
+    font-size: 1rem; font-weight: 700; color: #fff;
+    margin-bottom: 6px; display: flex; align-items: center; gap: 6px;
+}
+.tool-card .tool-desc {
+    font-size: 0.78rem; color: #aaa; margin-bottom: 8px; line-height: 1.4;
+}
+.tool-card .tool-meta {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.75rem;
+}
+.tool-card .tool-cost {
+    background: rgba(255,215,0,0.2); color: #ffd700;
+    padding: 3px 10px; border-radius: 12px; font-weight: bold;
+}
+.tool-card .tool-cat {
+    color: #888; font-size: 0.7rem;
+}
+.tool-card.selected {
+    border-color: #00f2fe;
+    background: rgba(79,172,254,0.15);
+    box-shadow: 0 0 20px rgba(79,172,254,0.3);
+}
+
+/* Category colors */
+.cat-phone { --accent: #22c55e; }
+.cat-vehicle { --accent: #f59e0b; }
+.cat-identity { --accent: #ef4444; }
+.cat-location { --accent: #8b5cf6; }
+.cat-banking { --accent: #06b6d4; }
+
 .tab-btn {
-    padding: 8px 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.15);
-    background: rgba(255,255,255,0.05); color: #ccc; cursor: pointer; font-size: 0.85rem;
-    transition: all 0.2s;
+    padding: 8px 18px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.05); color: #ccc; cursor: pointer;
+    font-size: 0.85rem; transition: all 0.2s;
 }
-.tab-btn:hover { background: rgba(79,172,254,0.15); color: #fff; }
+.tab-btn:hover { background: rgba(79,172,254,0.2); color: #fff; }
 .tab-btn.active {
-    background: linear-gradient(90deg, #00f2fe, #4facfe); color: #000; font-weight: bold;
-    border-color: transparent;
+    background: linear-gradient(90deg, #00f2fe, #4facfe);
+    color: #000; font-weight: bold; border-color: transparent;
 }
-.tool-card:hover { border-color: #4facfe !important; transform: translateY(-2px); }
 </style>
 """
 
@@ -382,13 +400,13 @@ def render_page(title, content, extra_head=""):
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{title} — Ritesh OSINT</title>
+<title>{title} — OSINT Toolkit</title>
 {BASE_STYLE}
 {extra_head}
 </head>
 <body>
 <div class="navbar">
-    <a href="/" class="brand">🕵️ Ritesh OSINT Toolkit</a>
+    <a href="/" class="brand">🕵️ OSINT Toolkit</a>
     <div class="links">{nav_user}</div>
 </div>
 <div class="container">{content}</div>
@@ -412,7 +430,7 @@ def signup():
             conn.execute("INSERT INTO users (username, password, credits) VALUES (?, ?, ?)",
                          (u, generate_password_hash(p), 5))
             conn.commit()
-            return render_page("Signup", '<div class="success">✅ Account bana! 5 free credits mile. <a href="/login">Login karo</a></div>')
+            return render_page("Signup", '<div class="success">✅ Account created! 5 free credits added. <a href="/login">Login</a></div>')
         except sqlite3.IntegrityError:
             return render_page("Signup", '<div class="error">❌ Username already exists</div><a href="/signup">Try again</a>')
         finally:
@@ -470,7 +488,7 @@ def logout():
 
 
 # ============================================================
-# CREDIT API (live refresh)
+# CREDIT API
 # ============================================================
 @app.route('/api/credits')
 @login_required
@@ -482,7 +500,7 @@ def api_credits():
 
 
 # ============================================================
-# MAIN DASHBOARD
+# MAIN DASHBOARD - All Colorful Tool Buttons
 # ============================================================
 @app.route('/')
 @login_required
@@ -527,15 +545,29 @@ def index():
     <div class="tool-grid" id="toolGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:25px;">
     """
 
+    # Map category to CSS class
+    cat_class_map = {
+        "📱 Phone": "cat-phone",
+        "🚗 Vehicle": "cat-vehicle",
+        "🆔 Identity": "cat-identity",
+        "📍 Location": "cat-location",
+        "🏦 Banking": "cat-banking",
+    }
+
     for cat, items in GROUPED.items():
+        css_cat = cat_class_map.get(cat, "")
         for key, cfg in items:
-            safe_label = cfg['label'].replace("'", "")
+            safe_label = cfg['label'].replace(chr(39), '')
+            safe_desc = cfg['desc'].replace(chr(39), '')
             content += f"""
-            <div class="tool-card" data-cat="{cat}" data-key="{key}"
-                 onclick="selectTool('{key}', '{safe_label}', '{cfg['placeholder']}', this)"
-                 style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:14px;cursor:pointer;transition:all .2s;">
-                <div style="font-size:.95rem;font-weight:600;color:#eee;">{cfg['label']}</div>
-                <div style="font-size:.75rem;color:#888;margin-top:4px;">Cost: {cfg['cost']} credits</div>
+            <div class="tool-card {css_cat}" data-cat="{cat}" data-key="{key}"
+                 onclick="selectTool('{key}', '{safe_label}', '{cfg['placeholder']}', this)">
+                <div class="tool-name">{cfg['label']}</div>
+                <div class="tool-desc">{cfg['desc']}</div>
+                <div class="tool-meta">
+                    <span class="tool-cost">💰 {cfg['cost']} cr</span>
+                    <span class="tool-cat">{cat}</span>
+                </div>
             </div>
             """
 
@@ -561,14 +593,10 @@ def index():
     }
     function selectTool(key, label, placeholder, el) {
         selectedTool = key;
-        document.querySelectorAll('.tool-card').forEach(c => {
-            c.style.borderColor = 'rgba(255,255,255,0.08)';
-            c.style.background = 'rgba(255,255,255,0.05)';
-        });
-        el.style.borderColor = '#00f2fe';
-        el.style.background = 'rgba(79,172,254,0.15)';
+        document.querySelectorAll('.tool-card').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
         const input = document.getElementById('queryInput');
-        input.disabled = false; input.placeholder = placeholder || 'Value daalo...'; input.value = ''; input.focus();
+        input.disabled = false; input.placeholder = placeholder || 'Enter value...'; input.value = ''; input.focus();
         document.getElementById('searchBtn').disabled = false;
         document.getElementById('output').innerHTML = '';
     }
@@ -587,13 +615,13 @@ def index():
     }
 
     async function runSearch() {
-        if (!selectedTool) { alert('Pehle tool select karo'); return; }
+        if (!selectedTool) { alert('Please select a tool first'); return; }
         const q = document.getElementById('queryInput').value.trim();
         const out = document.getElementById('output');
         const btn = document.getElementById('searchBtn');
-        if (!q) { out.innerHTML = '<div class="error">❌ Value daalo</div>'; return; }
+        if (!q) { out.innerHTML = '<div class="error">❌ Please enter a value</div>'; return; }
         btn.disabled = true;
-        out.innerHTML = '<div style="text-align:center;padding:30px;color:#4facfe;">⏳ Fetching...</div>';
+        out.innerHTML = '<div style="text-align:center;padding:30px;color:#4facfe;">⏳ Fetching data...</div>';
         try {
             const res = await fetch(`/api/lookup?tool=${encodeURIComponent(selectedTool)}&q=${encodeURIComponent(q)}`);
             const data = await res.json();
@@ -620,7 +648,7 @@ def index():
 
 
 # ============================================================
-# API LOOKUP  (FIXED URL + strong promotional filtering)
+# API LOOKUP - Clean response (no promotion/admin/bot names)
 # ============================================================
 @app.route('/api/lookup')
 @login_required
@@ -629,7 +657,7 @@ def lookup():
     q = request.args.get('q', '').strip()
 
     if tool not in ENDPOINTS:
-        return jsonify({"success": False, "message": f"Invalid tool: {tool}"}), 400
+        return jsonify({"success": False, "message": "Invalid tool"}), 400
     if not q:
         return jsonify({"success": False, "message": "Empty query"}), 400
 
@@ -648,20 +676,11 @@ def lookup():
         conn.close()
         return jsonify({"success": False, "message": f"Insufficient credits. Need {cost}, have {user['credits']}. Please buy more."})
 
-    # ============================================================
-    # FIXED URL CONSTRUCTION
-    # Format: https://api.sarkariallupdates.com/api?=<api_name>&key=30day&<param>=<value>
-    # Example: https://api.sarkariallupdates.com/api?=num_info&key=30day&num=9162516577
-    # ============================================================
-    api_name = cfg['api_name']
-    param = cfg['param']
-    url = f"{API_BASE}?={api_name}&key={API_KEY}&{param}={q}"
-
-    print(f"[LOOKUP] Tool={tool} | URL={url}")
+    # Build API URL
+    url = f"{API_BASE}?={cfg['api_name']}&key={API_KEY}&{cfg['param']}={q}"
 
     try:
         r = requests.get(url, timeout=TIMEOUT)
-        status_code = r.status_code
         ctype = r.headers.get('content-type', '')
 
         if 'application/json' in ctype:
@@ -672,82 +691,61 @@ def lookup():
         else:
             data = r.text
 
-        # ---------- Strong promotional stripping ----------
+        # Remove all promotional / admin / bot / channel info
         if isinstance(data, dict):
-            unwanted_keys = {
-                'credit_limit', 'credit', 'bot_username', 'channel_link',
+            keys_to_remove = [
+                'credit_limit', 'credit', 'credits', 'bot_username', 'channel_link',
                 'channel', 'username', 'bot', 'join', 'owner', 'rate_limit',
                 'developer', 'dev', 'powered_by', 'powered', 'author',
-                'telegram', 'tg', 'channel_username', 'bot_name',
-                'promo', 'advertisement', 'sponsor', 'watermark', 'footer',
-                'header', 'join_us', 'our_channel', 'subscribe', 'follow',
-                'credit_used', 'credits_used', 'quota', 'remaining', 'limit',
-                'api_name', 'api', 'endpoint'
-            }
-            def clean_obj(obj):
-                if isinstance(obj, dict):
-                    return {k: clean_obj(v) for k, v in obj.items() if k.lower() not in unwanted_keys}
-                elif isinstance(obj, list):
-                    return [clean_obj(i) for i in obj]
-                return obj
-            data = clean_obj(data)
+                'telegram', 'tg', 'channel_username', 'bot_name', 'api_owner',
+                'api_developer', 'api_channel', 'support', 'contact',
+                'website', 'link', 'links', 'promo', 'promotion', 'ad',
+                'advertisement', 'sponsor', 'sponsored', 'source', 'provider',
+                'api_provider', 'api_name', 'api_version', 'version',
+                'admin', 'admin_username', 'admin_name', 'admin_contact',
+                'bot_link', 'channel_name', 'group', 'group_link',
+                'subscribe', 'follow', 'like', 'share',
+            ]
+            for k in keys_to_remove:
+                data.pop(k, None)
+
+            # Recursively clean nested dicts
+            if 'data' in data and isinstance(data['data'], dict):
+                for k in keys_to_remove:
+                    data['data'].pop(k, None)
+            if 'result' in data and isinstance(data['result'], dict):
+                for k in keys_to_remove:
+                    data['result'].pop(k, None)
 
         pretty = json.dumps(data, indent=2, ensure_ascii=False) if isinstance(data, (dict, list)) else str(data)
 
-        # Remove promotional patterns
-        promo_patterns = [
+        # Text-based cleanup for any remaining promotional content
+        unwanted_patterns = [
             '@SADAURA4U', 'SADAURA4U', 'sadaura4u',
             '@shiva_158', 'shiva_158',
-            '@Osintinfooobot', 'Osintinfooobot',
-            't.me/', 'https://t.me/', 'telegram.me/',
-            't.me/osintinfoooo', 'osintinfoooo',
+            '@Osintinfooobot', 'Osintinfooobot', 'osintinfoooo',
+            't.me/', 'https://t.me/', 'telegram.me/', 'http://t.me/',
+            'Telegram', 'telegram', 'TG Bot', 'tg bot',
             'Join @', 'join @', 'Join our', 'join our',
             'Owner:', 'owner:', 'Channel:', 'channel:', 'Bot:', 'bot:',
             'Follow @', 'follow @', 'Subscribe', 'subscribe',
             'powered by', 'Powered by', 'Powered By',
             'credit_limit', 'credit limit', 'rate_limit', 'rate limit',
-            'sarkariallupdates', 'sarkari all updates', 'api.sarkariallupdates.com',
-            'osintinfo', 'osint info',
+            'API Owner', 'API Developer', 'API Channel',
+            'Join Channel', 'join channel', 'Join Group', 'join group',
+            'For support', 'for support', 'Contact:', 'contact:',
+            'Visit:', 'visit:', 'Website:', 'website:',
+            'Developed by', 'developed by', 'Made by', 'made by',
+            'Admin:', 'admin:', 'Admin Name', 'admin name',
+            '@admin', 'Admin Username', 'admin username',
         ]
-        for pattern in promo_patterns:
+        for pattern in unwanted_patterns:
             pretty = pretty.replace(pattern, '')
-
-        # Regex cleanup for @usernames and telegram links
-        pretty = re.sub(r'@[A-Za-z0-9_]{4,}', '', pretty)
-        pretty = re.sub(r'https?://t\.me/\S+', '', pretty)
-        pretty = re.sub(r'\b(?:channel|group|bot)\s*[:\-]\s*\S+', '', pretty, flags=re.I)
-        pretty = re.sub(r'\bjoin\s+\S+', '', pretty, flags=re.I)
 
         # Remove empty lines
         pretty = '\n'.join(line for line in pretty.splitlines() if line.strip())
 
-        if not pretty.strip():
-            pretty = "⚠️ No data returned (or all fields were promotional and stripped)."
-
-        # ---------- Detect API error response ----------
-        is_error = False
-        error_msg = ""
-        if status_code >= 400:
-            is_error = True
-            error_msg = f"API returned HTTP {status_code}"
-        elif isinstance(data, dict):
-            # Common error keys
-            for k in ('error', 'message', 'msg', 'status', 'success'):
-                if k in data and str(data[k]).lower() in ('false', 'error', 'failed', 'fail'):
-                    is_error = True
-                    error_msg = str(data.get('message', data.get('msg', 'API error')))
-                    break
-
-        # If API error — do NOT deduct credits
-        if is_error and ('error' in pretty.lower() or 'fail' in pretty.lower() or status_code >= 400):
-            conn.close()
-            return jsonify({
-                "success": False,
-                "message": f"{error_msg} — API Response: {pretty[:300]}",
-                "raw": pretty
-            })
-
-        # ---------- Success: deduct credits ----------
+        # Deduct credits
         new_credits = user['credits'] - cost
         conn.execute("UPDATE users SET credits=? WHERE id=?", (new_credits, user_id))
         conn.execute("INSERT INTO history (user_id, tool, query, cost) VALUES (?, ?, ?, ?)",
@@ -755,34 +753,23 @@ def lookup():
         conn.commit()
         conn.close()
 
-        # Mask the key in the displayed URL
-        safe_url = f"{API_BASE}?={api_name}&key=***&{param}={q}"
-
         return jsonify({
             "success": True,
-            "status": status_code,
+            "status": r.status_code,
             "pretty": pretty,
-            "url": safe_url,
+            "url": f"{API_BASE}?={cfg['api_name']}&key=***&{cfg['param']}={q}",
             "cost": cost,
             "remaining": new_credits,
         })
 
     except requests.exceptions.Timeout:
         conn.close()
-        return jsonify({"success": False, "message": "⏱ API timeout. Credit NOT deducted. Try again."}), 504
-    except requests.exceptions.ConnectionError as e:
-        conn.close()
-        return jsonify({"success": False, "message": f"🌐 Connection error: {str(e)}. Credit NOT deducted."}), 503
+        return jsonify({"success": False, "message": "API timeout. Credit not deducted. Try again."}), 504
     except Exception as e:
         conn.close()
-        return jsonify({"success": False, "message": f"❌ Error: {str(e)}. Credit NOT deducted."}), 500
-```
+        return jsonify({"success": False, "message": f"Error: {str(e)}. Credit not deducted."}), 500
 
----
 
-📁 PART 2 — Copy this after Part 1
-
-```python
 # ============================================================
 # BUY CREDITS
 # ============================================================
@@ -833,8 +820,8 @@ def buy():
                     <span style="color:#eee;">{UPI_NAME}</span>
                 </div>
                 <p style="margin-top:15px;color:#aaa;font-size:0.85rem;line-height:1.6;">
-                    📌 Payment ke baad <b>UTR / Transaction ID</b> neeche form me daale.<br>
-                    ⏱ Admin verify karke credits add karega.
+                    📌 After payment, enter <b>UTR / Transaction ID</b> below.<br>
+                    ⏱ Admin will verify and add credits.
                 </p>
                 <div style="margin-top:15px;display:flex;gap:10px;flex-wrap:wrap;">
                     <a href="upi://pay?pa={UPI_ID}&pn={UPI_NAME}&cu=INR" class="btn">📲 Open UPI App</a>
@@ -845,7 +832,7 @@ def buy():
 
     <div class="card">
         <h2 style="font-size:1.2rem;margin-bottom:15px;color:#00f2fe;">📝 Submit Payment Proof</h2>
-        <form method="POST" action="/submit-payment">
+        <form method="POST"action="/submit-payment">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
                 <select name="package" class="input" required>
                     <option value="">-- Select Package --</option>
@@ -897,7 +884,7 @@ def submit_payment():
         <p style="color:#ccc;line-height:1.7;margin-bottom:20px;">
             UTR: <b>{utr}</b><br>
             Package: <b>₹{pkg['amount']} = {pkg['credits']} credits</b><br><br>
-            Admin verification ke baad credits add ho jayenge.
+            Credits will be added after admin verification.
         </p>
         <a href="/buy" class="btn">← Back to Buy</a>
     </div>
@@ -943,7 +930,7 @@ def history():
 
 
 # ============================================================
-# INBOX (broadcasts for users)
+# INBOX
 # ============================================================
 @app.route('/inbox')
 @login_required
@@ -1078,11 +1065,11 @@ def admin():
     <div class="card" style="border:2px solid #ffc800;">
         <h2 style="font-size:1.15rem;margin-bottom:12px;color:#ffc800;">📢 Broadcast Message (Send to All)</h2>
         <form method="POST" action="/admin/broadcast">
-            <textarea class="input" name="message" rows="4" placeholder="Yahan message likho... Sabhi users ko inbox me dikhega." required
+            <textarea class="input" name="message" rows="4" placeholder="Type your message here... All users will see it in inbox." required
                       style="resize:vertical;font-family:inherit;margin-bottom:10px;"></textarea>
             <button class="btn" style="width:100%;">📤 Send to All Users</button>
         </form>
-        <p style="color:#888;font-size:.8rem;margin-top:10px;">Note: Ye message sabhi users ke Inbox me chala jayega aur unke dashboard par bhi dikhega.</p>
+        <p style="color:#888;font-size:.8rem;margin-top:10px;">Note: This message will go to all users' Inbox and also appear on their dashboard.</p>
     </div>
 
     <div class="card">
@@ -1165,9 +1152,6 @@ def admin_payment_action():
     return redirect(url_for('admin'))
 
 
-# ============================================================
-# ADMIN BROADCAST
-# ============================================================
 @app.route('/admin/broadcast', methods=['POST'])
 @admin_required
 def admin_broadcast():
@@ -1207,7 +1191,7 @@ init_db()
 
 if __name__ == '__main__':
     print("\n" + "="*60)
-    print("🕵️  Ritesh OSINT Toolkit")
+    print("🕵️  OSINT Toolkit")
     print("="*60)
     print(f"🌐 URL        : http://127.0.0.1:8080")
     print(f"📦 Tools      : {len(ENDPOINTS)} APIs")
