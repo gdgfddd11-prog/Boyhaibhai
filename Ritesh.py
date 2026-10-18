@@ -406,7 +406,7 @@ def render_page(title, content, extra_head=""):
 </head>
 <body>
 <div class="navbar">
-    <a href="/" class="brand">🕵️ OSINT Toolkit</a>
+    <a href="/" class="brand">🕵️ Ritesh OSINT Toolkit</a>
     <div class="links">{nav_user}</div>
 </div>
 <div class="container">{content}</div>
@@ -1191,7 +1191,7 @@ init_db()
 
 if __name__ == '__main__':
     print("\n" + "="*60)
-    print("🕵️  OSINT Toolkit")
+    print("🕵️  Ritesh OSINT Toolkit")
     print("="*60)
     print(f"🌐 URL        : http://127.0.0.1:8080")
     print(f"📦 Tools      : {len(ENDPOINTS)} APIs")
