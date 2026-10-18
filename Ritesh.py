@@ -1,5 +1,5 @@
 """
-🕵️ Ritesh OSINT Toolkit - All-in-One (FIXED + Broadcast + Credit Display)
+🕵️ Ritesh OSINT Toolkit - All-in-One (FIXED + Broadcast + Credit Display + New APIs)
 Run: python Ritesh.py
 """
 
@@ -21,9 +21,9 @@ app.secret_key = os.environ.get("SECRET_KEY", secrets.token_hex(32))
 # ============================================================
 # CONFIG
 # ============================================================
-API_BASE = "https://api.osintxc.com"
-API_KEY = "DADDY"
-TIMEOUT = 25
+API_BASE = "https://api.sarkariallupdates.com/api"
+API_KEY = "30day"
+TIMEOUT = 30
 DB_PATH = "osint.db"
 STATIC_DIR = Path("static")
 STATIC_DIR.mkdir(exist_ok=True)
@@ -47,14 +47,89 @@ PACKAGES = [
 DEFAULT_COST = 1
 
 # ============================================================
-# ENDPOINTS
+# ENDPOINTS  (Sarkari All Updates API)
 # ============================================================
 ENDPOINTS = {
-    "num":    {"path": "num",    "param": "number", "label": "📞 Number Lookup",  "placeholder": "9876543210",       "category": "📱 Phone",   "cost": 2},
-    "email":  {"path": "email",  "param": "value",  "label": "📧 Email Lookup",   "placeholder": "test@example.com", "category": "📧 Email",   "cost": 2},
-    "aadhar": {"path": "aadhaar","param": "value",  "label": "🆔 Aadhaar Lookup", "placeholder": "123456789012",     "category": "🆔 Identity","cost": 3},
+    # -------- Phone / Number --------
+    "num_info": {
+        "param": "num",
+        "label": "📞 Number Info",
+        "placeholder": "9162516577",
+        "category": "📱 Phone",
+        "cost": 2,
+    },
+    "tg": {
+        "param": "q",
+        "label": "📨 Telegram to Number",
+        "placeholder": "@Perfectamit65",
+        "category": "📱 Phone",
+        "cost": 2,
+    },
+
+    # -------- Vehicle --------
+    "vehicle_full": {
+        "param": "xr",
+        "label": "🚗 Vehicle Full Info",
+        "placeholder": "KL41V3504",
+        "category": "🚗 Vehicle",
+        "cost": 3,
+    },
+    "vehicle_to_number": {
+        "param": "xr",
+        "label": "🔢 Vehicle to Number",
+        "placeholder": "KL41V3504",
+        "category": "🚗 Vehicle",
+        "cost": 2,
+    },
+
+    # -------- Identity / KYC --------
+    "pan2dob_name": {
+        "param": "pan2dob_name",
+        "label": "🆔 PAN → Name + DOB",
+        "placeholder": "cnkpk7230d",
+        "category": "🆔 Identity",
+        "cost": 3,
+    },
+    "aadhaar2pan": {
+        "param": "aadhaar2pan",
+        "label": "🪪 Aadhaar → PAN",
+        "placeholder": "123456789012",
+        "category": "🆔 Identity",
+        "cost": 3,
+    },
+    "addhaar2num": {
+        "param": "q",
+        "label": "📱 Aadhaar → Number",
+        "placeholder": "123456789012",
+        "category": "🆔 Identity",
+        "cost": 3,
+    },
+
+    # -------- Other --------
+    "imei": {
+        "param": "imei",
+        "label": "📲 IMEI Info",
+        "placeholder": "356938035643809",
+        "category": "📲 Device",
+        "cost": 2,
+    },
+    "pincode": {
+        "param": "pincode",
+        "label": "📍 Pincode Info",
+        "placeholder": "110001",
+        "category": "📍 Address",
+        "cost": 1,
+    },
+    "ifse": {
+        "param": "ifse",
+        "label": "🏦 IFSC Info",
+        "placeholder": "SBIN0001234",
+        "category": "🏦 Banking",
+        "cost": 1,
+    },
 }
 
+# Group by category for UI
 GROUPED = {}
 for k, v in ENDPOINTS.items():
     GROUPED.setdefault(v["category"], []).append((k, v))
@@ -97,14 +172,12 @@ def init_db():
         FOREIGN KEY(user_id) REFERENCES users(id)
     )""")
 
-    # Broadcast messages table
     c.execute("""CREATE TABLE IF NOT EXISTS broadcasts (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         message TEXT NOT NULL,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )""")
 
-    # Broadcast read tracking (per user)
     c.execute("""CREATE TABLE IF NOT EXISTS broadcast_reads (
         user_id INTEGER NOT NULL,
         broadcast_id INTEGER NOT NULL,
@@ -165,7 +238,6 @@ def current_user():
 
 
 def get_unread_broadcasts(user_id):
-    """Return broadcast messages this user hasn't seen."""
     conn = get_db()
     rows = conn.execute("""
         SELECT b.id, b.message, b.created_at
@@ -264,7 +336,6 @@ def render_page(title, content, extra_head=""):
 
     if user:
         credit_html = f'<span class="credit-badge">💰 {user["credits"]} Credits</span>'
-        notif_html = ""
         if unread_count > 0:
             notif_html = f'<a href="/inbox" class="notif-bell">🔔 Inbox<span class="dot"></span> ({unread_count})</a>'
         else:
@@ -463,7 +534,7 @@ def index():
             c.style.display = (cat === 'ALL' || c.dataset.cat === cat) ? '' : 'none';
         });
     }
-    function selectTool(key, label, placeholder, el) {
+    function selectTool(key, label, placeholde, el) {
         selectedTool = key;
         document.querySelectorAll('.tool-card').forEach(c => {
             c.style.borderColor = 'rgba(255,255,255,0.08)';
@@ -484,7 +555,6 @@ def index():
             const d = await r.json();
             const el = document.getElementById('dashCredits');
             if (el) el.textContent = '💰 ' + d.credits;
-            // Also update navbar badge
             document.querySelectorAll('.credit-badge').forEach(b => {
                 b.textContent = '💰 ' + d.credits + ' Credits';
             });
@@ -525,7 +595,7 @@ def index():
 
 
 # ============================================================
-# API LOOKUP
+# API LOOKUP  (with strong promotional filtering)
 # ============================================================
 @app.route('/api/lookup')
 @login_required
@@ -553,7 +623,14 @@ def lookup():
         conn.close()
         return jsonify({"success": False, "message": f"Insufficient credits. Need {cost}, have {user['credits']}. Please buy more."})
 
-    url = f"{API_BASE}/{cfg['path']}?{cfg['param']}={q}&key={API_KEY}"
+    # Build the request URL exactly as the API expects:
+    # https://api.sarkariallupdates.com/api?=<tool>&key=30day&<param>=<value>
+    url = f"{API_BASE}?={cfg['param']}&key={API_KEY}&{cfg['param']}={q}"
+    # For tools where the API uses ?=num_info style, the tool name itself is the endpoint.
+    # The docs show: ?=num_info&key=...&num=...
+    # We'll map tool -> first query name.
+    api_tool_name = tool  # e.g. num_info, vehicle_full ...
+    url = f"{API_BASE}?={api_tool_name}&key={API_KEY}&{cfg['param']}={q}"
 
     try:
         r = requests.get(url, timeout=TIMEOUT)
@@ -566,32 +643,57 @@ def lookup():
         else:
             data = r.text
 
+        # ---------- Strong promotional stripping ----------
         if isinstance(data, dict):
-            for k in ('credit_limit', 'credit', 'bot_username', 'channel_link',
-                      'channel', 'username', 'bot', 'join', 'owner', 'rate_limit',
-                      'developer', 'dev', 'powered_by', 'powered', 'author',
-                      'telegram', 'tg', 'channel_username', 'bot_name'):
-                data.pop(k, None)
+            # Recursively remove unwanted keys
+            unwanted_keys = {
+                'credit_limit', 'credit', 'bot_username', 'channel_link',
+                'channel', 'username', 'bot', 'join', 'owner', 'rate_limit',
+                'developer', 'dev', 'powered_by', 'powered', 'author',
+                'telegram', 'tg', 'channel_username', 'bot_name',
+                'promo', 'advertisement', 'sponsor', 'watermark', 'footer',
+                'header', 'join_us', 'our_channel', 'subscribe', 'follow',
+                'credit_used', 'credits_used', 'quota', 'remaining', 'limit'
+            }
+            def clean_obj(obj):
+                if isinstance(obj, dict):
+                    return {k: clean_obj(v) for k, v in obj.items() if k.lower() not in unwanted_keys}
+                elif isinstance(obj, list):
+                    return [clean_obj(i) for i in obj]
+                return obj
+            data = clean_obj(data)
 
         pretty = json.dumps(data, indent=2, ensure_ascii=False) if isinstance(data, (dict, list)) else str(data)
 
-        unwanted_patterns = [
+        # Remove any promotional text patterns (case-insensitive)
+        promo_patterns = [
             '@SADAURA4U', 'SADAURA4U', 'sadaura4u',
             '@shiva_158', 'shiva_158',
             '@Osintinfooobot', 'Osintinfooobot',
             't.me/', 'https://t.me/', 'telegram.me/',
             't.me/osintinfoooo', 'osintinfoooo',
-            'Telegram', 'telegram', 'TG Bot', 'tg bot',
             'Join @', 'join @', 'Join our', 'join our',
             'Owner:', 'owner:', 'Channel:', 'channel:', 'Bot:', 'bot:',
             'Follow @', 'follow @', 'Subscribe', 'subscribe',
             'powered by', 'Powered by', 'Powered By',
             'credit_limit', 'credit limit', 'rate_limit', 'rate limit',
+            'sarkariallupdates', 'sarkari all updates', 'api.sarkariallupdates.com',
+            'osintinfo', 'osint info', 'osint',
         ]
-        for pattern in unwanted_patterns:
+        for pattern in promo_patterns:
             pretty = pretty.replace(pattern, '')
 
+        # Remove Telegram-like usernames and channel mentions
+        import re
+        pretty = re.sub(r'@[A-Za-z0-9_]{4,}', '', pretty)               # @usernames
+        pretty = re.sub(r'https?://t\.me/\S+', '', pretty)              # t.me links
+        pretty = re.sub(r'\b(?:channel|group|bot)\s*[:\-]\s*\S+', '', pretty, flags=re.I)
+        pretty = re.sub(r'\bjoin\s+\S+', '', pretty, flags=re.I)
+
+        # Remove empty lines / whitespace
         pretty = '\n'.join(line for line in pretty.splitlines() if line.strip())
+        if not pretty.strip():
+            pretty = "No data returned (or all fields were promotional and stripped)."
 
         new_credits = user['credits'] - cost
         conn.execute("UPDATE users SET credits=? WHERE id=?", (new_credits, user_id))
@@ -604,7 +706,7 @@ def lookup():
             "success": True,
             "status": r.status_code,
             "pretty": pretty,
-            "url": f"{API_BASE}/{cfg['path']}?{cfg['param']}={q}&key=***",
+            "url": f"{API_BASE}?={api_tool_name}&key=***&{cfg['param']}={q}",
             "cost": cost,
             "remaining": new_credits,
         })
@@ -679,7 +781,7 @@ def buy():
 
     <div class="card">
         <h2 style="font-size:1.2rem;margin-bottom:15px;color:#00f2fe;">📝 Submit Payment Proof</h2>
-        <form method="POST" action="/submit-payment">
+        <form method="POST"action="/submit-payment">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
                 <select name="package" class="input" required>
                     <option value="">-- Select Package --</option>
@@ -785,7 +887,6 @@ def inbox():
     user_id = session['user_id']
     messages = get_unread_broadcasts(user_id)
 
-    # Mark all as read
     conn = get_db()
     for m in messages:
         try:
@@ -795,7 +896,6 @@ def inbox():
             pass
     conn.commit()
 
-    # Fetch all messages (read + unread) for display
     all_msgs = conn.execute("SELECT * FROM broadcasts ORDER BY id DESC LIMIT 50").fetchall()
     conn.close()
 
