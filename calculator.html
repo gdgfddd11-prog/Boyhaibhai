@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a0a0a">
+<title>RITESH | EXPLOITS</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  html, body {
+    height: 100%;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #000;
+    overflow: hidden;
+  }
+
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a0a2e 50%, #0a0a0a 100%);
+    padding: 12px;
+  }
+
+  .calculator {
+    width: 100%;
+    max-width: 400px;
+    background: linear-gradient(160deg, #12101a 0%, #0a0812 100%);
+    border-radius: 28px;
+    padding: 20px 16px 24px;
+    box-shadow:
+      0 0 60px rgba(138, 43, 226, 0.35),
+      0 0 120px rgba(138, 43, 226, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(138, 43, 226, 0.25);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .brand {
+    text-align: center;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    background: linear-gradient(90deg, #a855f7, #ec4899, #a855f7);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shine 3s linear infinite;
+    text-transform: uppercase;
+    padding: 2px 0 6px;
+  }
+
+  @keyframes shine {
+    to { background-position: 200% center; }
+  }
+
+  .display {
+    background: linear-gradient(145deg, #0d0a16, #16101f);
+    border-radius: 18px;
+    padding: 18px 16px;
+    min-height: 110px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: flex-end;
+    gap: 6px;
+    border: 1px solid rgba(168, 85, 247, 0.2);
+    box-shadow: inset 0 2px 12px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+  }
+
+  .history {
+    font-size: 15px;
+    color: rgba(168, 85, 247, 0.55);
+    min-height: 20px;
+    word-wrap: break-word;
+    word-break: break-all;
+    text-align: right;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .result {
+    font-size: 42px;
+    font-weight: 700;
+    color: #fff;
+    word-wrap: break-word;
+    word-break: break-all;
+    text-align: right;
+    width: 100%;
+    line-height: 1.1;
+    text-shadow: 0 0 20px rgba(168, 85, 247, 0.6);
+    transition: font-size 0.15s ease;
+  }
+
+  .result.small { font-size: 30px; }
+  .result.tiny { font-size: 22px; }
+
+  .buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+
+  button {
+    border: none;
+    outline: none;
+    font-family: inherit;
+    font-size: 22px;
+    font-weight: 600;
+    height: 62px;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.1s ease;
+    color: #fff;
+    background: linear-gradient(145deg, #1e1a2e, #15111f);
+    box-shadow:
+      0 4px 10px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  button:active {
+    transform: scale(0.94);
+    filter: brightness(1.3);
+  }
+
+  .num {
+    background: linear-gradient(145deg, #221d33, #17121f);
+  }
+
+  .func {
+    background: linear-gradient(145deg, #2a1f45, #1e1530);
+    color: #c084fc;
+    font-size: 20px;
+  }
+
+  .operator {
+    background: linear-gradient(145deg, #3b1d6e, #2a1252);
+    color: #d8b4fe;
+    font-size: 26px;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    box-shadow:
+      0 4px 12px rgba(138, 43, 226, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .equals {
+    background: linear-gradient(145deg, #a855f7, #7c3aed);
+    font-size: 26px;
+    box-shadow:
+      0 4px 20px rgba(168, 85, 247, 0.6),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+
+  .clear {
+    background: linear-gradient(145deg, #7f1d1d, #991b1b);
+    color: #fecaca;
+    font-size: 20px;
+  }
+
+  .zero {
+    grid-column: span 1;
+  }
+
+  @media (max-height: 640px) {
+    button { height: 52px; font-size: 19px; }
+    .result { font-size: 34px; }
+    .calculator { gap: 10px; padding: 14px 12px 18px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="calculator">
+  <div class="brand">RITESH | EXPLOITS</div>
+
+  <div class="display">
+    <div class="history" id="history"></div>
+    <div class="result" id="result">0</div>
+  </div>
+
+  <div class="buttons">
+    <button class="clear" onclick="clearAll()">AC</button>
+    <button class="func" onclick="backspace()">⌫</button>
+    <button class="func" onclick="percent()">%</button>
+    <button class="operator" onclick="inputOp('÷')">÷</button>
+
+    <button class="num" onclick="inputNum('7')">7</button>
+    <button class="num" onclick="inputNum('8')">8</button>
+    <button class="num" onclick="inputNum('9')">9</button>
+    <button class="operator" onclick="inputOp('×')">×</button>
+
+    <button class="num" onclick="inputNum('4')">4</button>
+    <button class="num" onclick="inputNum('5')">5</button>
+    <button class="num" onclick="inputNum('6')">6</button>
+    <button class="operator" onclick="inputOp('−')">−</button>
+
+    <button class="num" onclick="inputNum('1')">1</button>
+    <button class="num" onclick="inputNum('2')">2</button>
+    <button class="num" onclick="inputNum('3')">3</button>
+    <button class="operator" onclick="inputOp('+')">+</button>
+
+    <button class="num zero" onclick="inputNum('0')">0</button>
+    <button class="num" onclick="inputDot()">.</button>
+    <button class="equals" onclick="calculate()">=</button>
+    <button class="func" onclick="toggleSign()">±</button>
+  </div>
+</div>
+
+<script>
+  const resultEl = document.getElementById('result');
+  const historyEl = document.getElementById('history');
+
+  let current = '0';
+  let previous = null;
+  let operator = null;
+  let resetNext = false;
+
+  function updateDisplay() {
+    let text = current;
+    if (text.length > 9) {
+      resultEl.classList.add('tiny');
+      resultEl.classList.remove('small');
+    } else if (text.length > 6) {
+      resultEl.classList.add('small');
+      resultEl.classList.remove('tiny');
+    } else {
+      resultEl.classList.remove('small', 'tiny');
+    }
+    resultEl.textContent = text;
+  }
+
+  function inputNum(n) {
+    if (resetNext) {
+      current = '0';
+      resetNext = false;
+    }
+    if (current === '0') current = n;
+    else if (current.replace('-', '').replace('.', '').length < 12) current += n;
+    updateDisplay();
+  }
+
+  function inputDot() {
+    if (resetNext) {
+      current = '0';
+      resetNext = false;
+    }
+    if (!current.includes('.')) current += '.';
+    updateDisplay();
+  }
+
+  function inputOp(op) {
+    if (operator && previous !== null && !resetNext) {
+      calculate(true);
+    }
+    previous = parseFloat(current);
+    operator = op;
+    resetNext = true;
+    historyEl.textContent = `${formatNum(previous)} ${op}`;
+  }
+
+  function calculate(chained = false) {
+    if (operator === null || previous === null) {
+      if (!chained) {
+        historyEl.textContent = '';
+        resetNext = false;
+      }
+      return;
+    }
+    const curr = parseFloat(current);
+    let res;
+    switch (operator) {
+      case '+': res = previous + curr; break;
+      case '−': res = previous - curr; break;
+      case '×': res = previous * curr; break;
+      case '÷':
+        if (curr === 0) {
+          resultEl.textContent = 'Error';
+          historyEl.textContent = 'Cannot divide by 0';
+          current = '0';
+          previous = null;
+          operator = null;
+          resetNext = true;
+          return;
+        }
+        res = previous / curr;
+        break;
+      default: return;
+    }
+    res = Math.round(res * 1e10) / 1e10;
+    historyEl.textContent = `${formatNum(previous)} ${operator} ${formatNum(curr)} =`;
+    current = String(res);
+    previous = null;
+    operator = null;
+    resetNext = true;
+    updateDisplay();
+  }
+
+  function formatNum(n) {
+    if (Math.abs(n) >= 1e12 || (Math.abs(n) < 1e-6 && n !== 0)) {
+      return n.toExponential(4);
+    }
+    return String(n);
+  }
+
+  function clearAll() {
+    current = '0';
+    previous = null;
+    operator = null;
+    resetNext = false;
+    historyEl.textContent = '';
+    resultEl.classList.remove('small', 'tiny');
+    updateDisplay();
+  }
+
+  function backspace() {
+    if (resetNext) {
+      current = '0';
+      resetNext = false;
+    } else if (current.length > 1) {
+      current = current.slice(0, -1);
+      if (current === '-' || current === '') current = '0';
+    } else {
+      current = '0';
+    }
+    updateDisplay();
+  }
+
+  function percent() {
+    const val = parseFloat(current) / 100;
+    current = String(Math.round(val * 1e10) / 1e10);
+    resetNext = true;
+    updateDisplay();
+  }
+
+  function toggleSign() {
+    if (current !== '0') {
+      current = current.startsWith('-') ? current.slice(1) : '-' + current;
+      updateDisplay();
+    }
+  }
+
+  // Keyboard support
+  document.addEventListener('keydown', (e) => {
+    const k = e.key;
+    if (/^[0-9]$/.test(k)) inputNum(k);
+    else if (k === '.') inputDot();
+    else if (k === '+') inputOp('+');
+    else if (k === '-') inputOp('−');
+    else if (k === '*') inputOp('×');
+    else if (k === '/') { e.preventDefault(); inputOp('÷'); }
+    else if (k === 'Enter' || k === '=') { e.preventDefault(); calculate(); }
+    else if (k === 'Backspace') backspace();
+    else if (k === 'Escape') clearAll();
+    else if (k === '%') percent();
+  });
+
+  updateDisplay();
+</script>
+
+</body>
+</html>
